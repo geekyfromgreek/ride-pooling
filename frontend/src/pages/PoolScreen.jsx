@@ -658,24 +658,41 @@ export default function PoolScreen({
 
               {/* Pickup Node */}
               <div
-                onClick={() => {
-                  setSearchModalType('pickup');
-                  setSearchQuery('');
-                }}
-                className="relative flex items-center bg-[#F4EFEB] rounded-2xl px-3.5 py-3 transition-colors hover:bg-[#eee8e2] cursor-pointer"
+                className="relative flex items-center bg-[#F4EFEB] rounded-2xl px-3.5 py-3 transition-colors hover:bg-[#eee8e2]"
               >
-                <div className="w-4 flex justify-center items-center mr-3 z-10 shrink-0">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#1D1D22]"></div>
+                <div
+                  onClick={() => {
+                    setSearchModalType('pickup');
+                    setSearchQuery('');
+                  }}
+                  className="flex items-center min-w-0 flex-1 cursor-pointer"
+                >
+                  <div className="w-4 flex justify-center items-center mr-3 z-10 shrink-0">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#1D1D22]"></div>
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-[11px] font-medium text-[#787571] uppercase tracking-wider">Pickup</span>
+                    <span className="text-[14px] font-semibold text-[#1D1D22] truncate mt-0.5">
+                      {originHub.name || originHub.shortName}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-col min-w-0 flex-1">
-                  <span className="text-[11px] font-medium text-[#787571] uppercase tracking-wider">Pickup</span>
-                  <span className="text-[14px] font-semibold text-[#1D1D22] truncate mt-0.5">
-                    {originHub.name || originHub.shortName}
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleFetchLiveLocation();
+                  }}
+                  disabled={isLocating}
+                  className="flex items-center gap-1 text-[12px] font-semibold text-[#1D1D22] px-2.5 py-1 bg-white hover:bg-[#FAF7F2] rounded-full border border-[#EAE5DC] cursor-pointer shrink-0 transition-colors shadow-xs ml-2"
+                  title="Fetch current GPS location"
+                >
+                  <span className={`material-symbols-outlined text-[15px] ${isLocating ? 'animate-spin text-[#F5C451]' : 'text-[#1D1D22]'}`}>
+                    {isLocating ? 'sync' : 'my_location'}
                   </span>
-                </div>
-                <span className="text-[12px] font-medium text-[#787571] px-2.5 py-0.5 bg-white/80 rounded-full border border-[#EAE5DC]">
-                  {useLiveLocation ? 'GPS' : 'Current'}
-                </span>
+                  <span>{isLocating ? 'Locating...' : useLiveLocation ? 'GPS Active' : 'Use GPS'}</span>
+                </button>
               </div>
 
               {/* Destination Node */}
@@ -1323,6 +1340,19 @@ export default function PoolScreen({
                   className="w-full pl-9 pr-3 py-2 bg-white rounded-xl text-sm text-[#1D1D22] border border-[#EAE5DC] focus:outline-none focus:border-[#1D1D22] font-body-md"
                 />
               </div>
+              {searchModalType === 'pickup' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleFetchLiveLocation();
+                    setSearchModalType(null);
+                  }}
+                  className="w-full mt-2.5 py-2 px-3 rounded-xl bg-[#1D1D22] text-white text-xs font-semibold flex items-center justify-center gap-2 hover:bg-black transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[16px] text-[#F5C451]">my_location</span>
+                  <span>Use My Current GPS Location</span>
+                </button>
+              )}
             </div>
 
             <div className="overflow-y-auto p-2 flex flex-col gap-1 max-h-[350px]">

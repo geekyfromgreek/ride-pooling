@@ -77,6 +77,35 @@ export default function JourneyScreen({
   onCancelRide = null,
   onBackToRides = null
 }) {
+  if (!activeRide) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center w-full px-4 py-12 max-w-md mx-auto text-center select-none animate-fade-in my-auto">
+        <div className="w-20 h-20 rounded-full bg-[#FAF7F2] border border-[#EAE5DC] flex items-center justify-center mb-5 shadow-xs">
+          <span className="material-symbols-outlined text-[36px] text-[#1D1D22]">
+            directions_car
+          </span>
+        </div>
+
+        <h2 className="text-[22px] font-bold text-[#1D1D22] tracking-tight mb-2">
+          Start your shared journey
+        </h2>
+
+        <p className="text-[13.5px] text-[#787571] leading-relaxed max-w-xs mb-8">
+          You don't have an active pooled ride right now. Book a ride to save up to 35% on solo fares and track your journey in real time.
+        </p>
+
+        <button
+          onClick={onBackToRides}
+          className="w-full max-w-xs h-13 py-3.5 bg-[#1D1D22] hover:bg-black active:scale-[0.98] text-white font-semibold text-[15px] rounded-full shadow-[0_4px_14px_rgba(29,29,34,0.18)] transition-all flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-[20px] text-[#F5C451]">near_me</span>
+          <span>Book a Ride</span>
+          <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+        </button>
+      </div>
+    );
+  }
+
   // Origin Hub: defaults to PVG COE (Mhasrul) or active ride pickup
   const origin = useMemo(() => {
     if (activeRide?.origin) return activeRide.origin;
