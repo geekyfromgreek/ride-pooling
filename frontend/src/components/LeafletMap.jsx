@@ -424,7 +424,7 @@ export default function LeafletMap({
           </div>
         `,
         iconSize: [140, 48],
-        iconAnchor: [70, 42]
+        iconAnchor: [70, 36]
       });
       addLayer(L.marker([pickup.lat, pickup.lon], { icon: pickupIcon, zIndexOffset: 500 }));
     }
@@ -447,7 +447,7 @@ export default function LeafletMap({
           </div>
         `,
         iconSize: [140, 48],
-        iconAnchor: [70, 42]
+        iconAnchor: [70, 36]
       });
       addLayer(L.marker([drop.lat, drop.lon], { icon: dropIcon, zIndexOffset: 600 }));
     }

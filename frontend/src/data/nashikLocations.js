@@ -1,34 +1,148 @@
 // Nashik Geographic Nodes, Corridors, and Mock Telemetry
 export const NASHIK_HUBS = [
-  { id: "cbs", name: "CBS Chowk, Nashik", shortName: "CBS Chowk", lat: 19.9977, lon: 73.7803, tag: "Central Terminal" },
-  { id: "college_rd", name: "College Road", shortName: "College Rd", lat: 20.0066, lon: 73.7609, tag: "Commercial/Academic" },
-  { id: "gangapur_rd", name: "Gangapur Road", shortName: "Gangapur Rd", lat: 20.0116, lon: 73.7595, tag: "Residential/Corridor" },
-  { id: "panchavati", name: "Panchavati", shortName: "Panchavati", lat: 20.0069, lon: 73.7930, tag: "Heritage Hub" },
-  { id: "dwarka", name: "Dwarka Circle", shortName: "Dwarka", lat: 19.9931, lon: 73.8037, tag: "Transit Junction" },
-  { id: "indira_nagar", name: "Indira Nagar", shortName: "Indira Nagar", lat: 19.9742, lon: 73.7819, tag: "South Suburb" },
-  { id: "satpur_midc", name: "Satpur MIDC", shortName: "Satpur MIDC", lat: 19.9974, lon: 73.7213, tag: "Industrial Tech" },
-  { id: "nashik_road", name: "Nashik Road Station", shortName: "Nashik Rd", lat: 19.9472, lon: 73.8421, tag: "Railway Terminal" },
-  { id: "deolali", name: "Deolali Camp", shortName: "Deolali", lat: 19.8901, lon: 73.8265, tag: "Cantonment Zone" },
-  { id: "cidco", name: "CIDCO", shortName: "CIDCO", lat: 19.9727, lon: 73.7579, tag: "Urban Sector" },
-  { id: "ambad_midc", name: "Ambad MIDC", shortName: "Ambad", lat: 19.9515, lon: 73.7362, tag: "Industrial Belt" },
-  { id: "mumbai_naka", name: "Mumbai Naka", shortName: "Mumbai Naka", lat: 19.9878, lon: 73.7825, tag: "Express Link" },
-  { id: "ashok_stambh", name: "Ashok Stambh", shortName: "Ashok Stambh", lat: 20.0020, lon: 73.7870, tag: "Civic Center" },
-  { id: "navashya", name: "Navashya Ganpati Ghat", shortName: "Navashya", lat: 20.0165, lon: 73.7422, tag: "Riverfront" },
+  // ─── CENTRAL TERMINALS & CIVIC HUBS ───
+  { id: "cbs", name: "CBS Chowk (Central Bus Stand)", shortName: "CBS Chowk", lat: 19.9977, lon: 73.7803, tag: "Central Terminal" },
+  { id: "ashok_stambh", name: "Ashok Stambh Central Square", shortName: "Ashok Stambh", lat: 20.0020, lon: 73.7870, tag: "Civic Center" },
+  { id: "mumbai_naka", name: "Mumbai Naka Gateway", shortName: "Mumbai Naka", lat: 19.9878, lon: 73.7825, tag: "Express Link" },
+  { id: "dwarka", name: "Dwarka Circle Transit Junction", shortName: "Dwarka Circle", lat: 19.9931, lon: 73.8037, tag: "Transit Junction" },
+  { id: "shalimar_chowk", name: "Shalimar Chowk Market Point", shortName: "Shalimar Chowk", lat: 19.9942, lon: 73.7852, tag: "Civic & Retail" },
+  { id: "mahamarg_bus_stand", name: "Mahamarg Bus Stand, Mumbai Naka", shortName: "Mahamarg Stand", lat: 19.9865, lon: 73.7832, tag: "Intercity Transit" },
+  { id: "thakkar_bazaar", name: "Thakkar Bazaar Bus Terminal", shortName: "Thakkar Bazaar", lat: 19.9958, lon: 73.7785, tag: "Bus Terminal" },
+  { id: "nimani_bus_stand", name: "Nimani Bus Stand, Panchavati", shortName: "Nimani Stand", lat: 20.0045, lon: 73.7995, tag: "Panchavati Terminal" },
+  { id: "canada_corner", name: "Canada Corner Junction", shortName: "Canada Corner", lat: 20.0015, lon: 73.7745, tag: "Civic Junction" },
+  { id: "sharanpur_road", name: "Sharanpur Road Circle", shortName: "Sharanpur Rd", lat: 19.9985, lon: 73.7725, tag: "Central Corridor" },
+
+  // ─── MIDTOWN, COLLEGE ROAD & GANGAPUR ROAD ───
+  { id: "college_rd", name: "College Road Commercial Hub", shortName: "College Rd", lat: 20.0066, lon: 73.7609, tag: "Commercial/Academic" },
+  { id: "gangapur_rd", name: "Gangapur Road Junction", shortName: "Gangapur Rd", lat: 20.0116, lon: 73.7595, tag: "Residential/Corridor" },
+  { id: "parijat_nagar", name: "Parijat Nagar Circle", shortName: "Parijat Nagar", lat: 19.9982, lon: 73.7548, tag: "Midtown Residential" },
+  { id: "mahatma_nagar", name: "Mahatma Nagar Sports Complex", shortName: "Mahatma Nagar", lat: 20.0035, lon: 73.7485, tag: "Academic & Sports" },
+  { id: "thatte_nagar", name: "Thatte Nagar Cross Point", shortName: "Thatte Nagar", lat: 20.0035, lon: 73.7682, tag: "Midtown Junction" },
+  { id: "bhonsala_circle", name: "Bhonsala Military Circle", shortName: "Bhonsala Circle", lat: 20.0028, lon: 73.7552, tag: "Academic Hub" },
+  { id: "jehan_circle", name: "Jehan Circle, Gangapur Road", shortName: "Jehan Circle", lat: 20.0145, lon: 73.7525, tag: "Retail Junction" },
+  { id: "serene_meadows", name: "Serene Meadows Approach", shortName: "Serene Meadows", lat: 20.0165, lon: 73.7482, tag: "Upscale Residential" },
+  { id: "anandwalli", name: "Anandwalli Village Square", shortName: "Anandwalli Sq", lat: 20.0125, lon: 73.7428, tag: "West River Belt" },
+  { id: "savarkar_nagar", name: "Savarkar Nagar, Gangapur Rd", shortName: "Savarkar Nagar", lat: 20.0185, lon: 73.7452, tag: "Residential Sector" },
+
+  // ─── HERITAGE, TEMPLES & GODAVARI RIVERFRONT ───
+  { id: "panchavati", name: "Panchavati Heritage Zone", shortName: "Panchavati", lat: 20.0069, lon: 73.7930, tag: "Heritage Hub" },
+  { id: "ramkund", name: "Ramkund Sacred Ghat", shortName: "Ramkund Ghat", lat: 20.0055, lon: 73.7915, tag: "Spiritual Landmark" },
+  { id: "kalaram_ मंदिर", name: "Kalaram Temple Gate", shortName: "Kalaram Temple", lat: 20.0082, lon: 73.7965, tag: "Spiritual Landmark" },
+  { id: "sita_gufa", name: "Sita Gufa Historical Complex", shortName: "Sita Gufa", lat: 20.0088, lon: 73.7972, tag: "Heritage Landmark" },
+  { id: "kapaleshwar", name: "Kapaleshwar Temple Ghat", shortName: "Kapaleshwar", lat: 20.0062, lon: 73.7928, tag: "Spiritual Landmark" },
   { id: "kapila", name: "Kapila Sangam Ghat", shortName: "Kapila Sangam", lat: 19.9984, lon: 73.8143, tag: "Riverfront Link" },
-  // Newly Added Verified Nashik Urban Landmarks & Arterials
-  { id: "govind_nagar", name: "Govind Nagar", shortName: "Govind Nagar", lat: 19.9822, lon: 73.7684, tag: "Residential Hub" },
-  { id: "city_centre_mall", name: "City Centre Mall, Untwadi", shortName: "City Centre Mall", lat: 19.9885, lon: 73.7635, tag: "Retail & Transit" },
-  { id: "mahatma_nagar", name: "Mahatma Nagar", shortName: "Mahatma Nagar", lat: 20.0035, lon: 73.7485, tag: "Academic & Sports" },
-  { id: "parijat_nagar", name: "Parijat Nagar", shortName: "Parijat Nagar", lat: 19.9982, lon: 73.7548, tag: "Midtown Residential" },
-  { id: "pathardi_phata", name: "Pathardi Phata", shortName: "Pathardi Phata", lat: 19.9405, lon: 73.7658, tag: "South Highway Junction" },
-  { id: "jail_road", name: "Jail Road, Nashik Road", shortName: "Jail Road", lat: 19.9580, lon: 73.8325, tag: "Railway Suburban" },
-  { id: "adgaon_naka", name: "Adgaon Naka (Highway Hub)", shortName: "Adgaon Naka", lat: 20.0385, lon: 73.8315, tag: "Highway & Medical Hub" },
-  // Verified Academic Campuses & North Nashik Hubs
+  { id: "navashya", name: "Navashya Ganpati Ghat, Anandwalli", shortName: "Navashya Ganpati", lat: 20.0165, lon: 73.7422, tag: "Riverfront Landmark" },
+  { id: "someshwar_temple", name: "Someshwar Waterfall & Temple", shortName: "Someshwar Temple", lat: 20.0245, lon: 73.7312, tag: "Scenic & Spiritual" },
+  { id: "tapovan", name: "Tapovan Tree Park & Ghat", shortName: "Tapovan Park", lat: 20.0012, lon: 73.8125, tag: "Ecological Heritage" },
+  { id: "saptashrungi_trust", name: "Saptashrungi Nivas Trust Office", shortName: "Saptashrungi Office", lat: 20.0042, lon: 73.7895, tag: "Pilgrim Services" },
+
+  // ─── ACADEMIC CAMPUSES & UNIVERSITIES ───
   { id: "pvg_coe", name: "PVG's College of Engineering (Dindori Rd, Mhasrul)", shortName: "PVG COE (Nashik)", lat: 20.0369, lon: 73.8007, tag: "Academic Campus" },
+  { id: "kbt_coe", name: "NDMVP KBT College of Engineering, Gangapur Rd", shortName: "KBT COE", lat: 20.0162, lon: 73.7548, tag: "Academic Hub" },
+  { id: "kkwagh", name: "KK Wagh Institute of Engineering, Amrutdham", shortName: "KK Wagh COE", lat: 20.0135, lon: 73.8228, tag: "Academic Campus" },
+  { id: "met_bhujbal", name: "MET Bhujbal Knowledge City, Adgaon", shortName: "MET Campus", lat: 20.0435, lon: 73.8492, tag: "Academic Campus" },
+  { id: "sandip_university", name: "Sandip University Campus, Mahiravani", shortName: "Sandip Univ", lat: 19.9675, lon: 73.6821, tag: "University Campus" },
   { id: "meri_mhasrul", name: "MERI Research Institute, Dindori Rd", shortName: "MERI (Dindori Rd)", lat: 20.0270, lon: 73.7995, tag: "Research & Transit" },
-  { id: "kbt_coe", name: "KBT College of Engineering, Gangapur Rd", shortName: "KBT COE", lat: 20.0162, lon: 73.7548, tag: "Academic Hub" },
-  { id: "kkwagh", name: "KK Wagh Institute of Engg, Amrutdham", shortName: "KK Wagh COE", lat: 20.0135, lon: 73.8228, tag: "Academic Campus" },
-  { id: "met_bhujbal", name: "MET Bhujbal Knowledge City, Adgaon", shortName: "MET Campus", lat: 20.0435, lon: 73.8492, tag: "Academic Campus" }
+  { id: "byk_college", name: "BYK College of Commerce", shortName: "BYK College", lat: 20.0085, lon: 73.7645, tag: "Academic Hub" },
+  { id: "hpt_ryk", name: "HPT Arts & RYK Science College", shortName: "HPT RYK College", lat: 20.0072, lon: 73.7630, tag: "Academic Campus" },
+  { id: "gokhale_edu", name: "Gokhale Education Society Campus", shortName: "GES Campus", lat: 20.0062, lon: 73.7620, tag: "Academic Belt" },
+  { id: "ycmou", name: "YCMOU Open University Campus, Gangapur Dam", shortName: "YCMOU Univ", lat: 20.0285, lon: 73.7025, tag: "University Campus" },
+  { id: "ndmvp_medical", name: "NDMVP Medical College & Hospital, Adgaon", shortName: "NDMVP Medical", lat: 20.0345, lon: 73.8385, tag: "Medical Campus" },
+  { id: "matoshri_engg", name: "Matoshri College of Engineering, Eklahare", shortName: "Matoshri COE", lat: 19.9812, lon: 73.8752, tag: "Academic Campus" },
+  { id: "guru_gobind", name: "Guru Gobind Singh College, Indira Nagar", shortName: "GGS College", lat: 19.9682, lon: 73.7745, tag: "Academic Campus" },
+  { id: "ashoka_universal", name: "Ashoka Universal School, Chandsi", shortName: "Ashoka School", lat: 20.0382, lon: 73.7682, tag: "School Campus" },
+  { id: "symbiosis_nashik", name: "Symbiosis Institute, Pathardi", shortName: "Symbiosis Nashik", lat: 19.9325, lon: 73.7582, tag: "University Campus" },
+
+  // ─── SOUTH NASHIK, UNTWADI & SHOPPING MALLS ───
+  { id: "city_centre_mall", name: "City Centre Mall, Untwadi", shortName: "City Centre Mall", lat: 19.9885, lon: 73.7635, tag: "Retail & Transit" },
+  { id: "govind_nagar", name: "Govind Nagar Circle", shortName: "Govind Nagar", lat: 19.9822, lon: 73.7684, tag: "Residential Hub" },
+  { id: "pinnacle_mall", name: "Pinnacle Mall Circle, Trimbak Rd", shortName: "Pinnacle Mall", lat: 19.9928, lon: 73.7742, tag: "Commercial Mall" },
+  { id: "reliance_mall_untwadi", name: "Reliance Mall, Untwadi Road", shortName: "Reliance Mall", lat: 19.9842, lon: 73.7615, tag: "Retail Hub" },
+  { id: "tidke_colony", name: "Tidke Colony Central Road", shortName: "Tidke Colony", lat: 19.9895, lon: 73.7758, tag: "Residential Sector" },
+  { id: "kamatwade", name: "Kamatwade Feeder Point", shortName: "Kamatwade", lat: 19.9625, lon: 73.7482, tag: "Suburban Belt" },
+  { id: "patil_nagar", name: "Patil Nagar, CIDCO", shortName: "Patil Nagar", lat: 19.9685, lon: 73.7512, tag: "Urban Suburb" },
+
+  // ─── CIDCO, AMBAD & INDUSTRIAL BELTS ───
+  { id: "cidco", name: "CIDCO Bus Station Sector 4", shortName: "CIDCO Station", lat: 19.9727, lon: 73.7579, tag: "Urban Sector" },
+  { id: "trimurti_chowk", name: "Trimurti Chowk Sector 4, CIDCO", shortName: "Trimurti Chowk", lat: 19.9685, lon: 73.7545, tag: "Commercial Circle" },
+  { id: "pavan_nagar", name: "Pavan Nagar Stadium, CIDCO", shortName: "Pavan Nagar", lat: 19.9765, lon: 73.7535, tag: "Residential Hub" },
+  { id: "uttam_nagar", name: "Uttam Nagar Cross, CIDCO", shortName: "Uttam Nagar", lat: 19.9755, lon: 73.7645, tag: "Residential Belt" },
+  { id: "lekha_nagar", name: "Lekha Nagar Junction", shortName: "Lekha Nagar", lat: 19.9675, lon: 73.7625, tag: "Highway Junction" },
+  { id: "khutwad_nagar", name: "Khutwad Nagar Ring Road", shortName: "Khutwad Nagar", lat: 19.9585, lon: 73.7582, tag: "Residential Sector" },
+  { id: "ambad_midc", name: "Ambad MIDC Industrial Belt", shortName: "Ambad MIDC", lat: 19.9515, lon: 73.7362, tag: "Industrial Belt" },
+  { id: "siemens_circle", name: "Siemens Point Circle, Ambad", shortName: "Siemens Circle", lat: 19.9555, lon: 73.7325, tag: "Industrial Hub" },
+  { id: "garware_point", name: "Garware Point Gate, Ambad", shortName: "Garware Point", lat: 19.9475, lon: 73.7395, tag: "Industrial Landmark" },
+  { id: "xlo_point", name: "XLO Point Junction, Ambad", shortName: "XLO Point", lat: 19.9585, lon: 73.7415, tag: "Industrial Junction" },
+  { id: "abb_circle", name: "ABB Circle, Trimbak Road", shortName: "ABB Circle", lat: 19.9882, lon: 73.7612, tag: "Industrial/Arterial" },
+
+  // ─── SATPUR MIDC & TRIMBAK ROAD ───
+  { id: "satpur_midc", name: "Satpur MIDC Tech Hub", shortName: "Satpur MIDC", lat: 19.9974, lon: 73.7213, tag: "Industrial Tech" },
+  { id: "iti_circle", name: "Trimbak Road ITI Circle", shortName: "ITI Circle Satpur", lat: 19.9925, lon: 73.7265, tag: "Academic/Industrial" },
+  { id: "nice_area", name: "NICE Industrial Area, Satpur", shortName: "NICE Satpur", lat: 20.0025, lon: 73.7185, tag: "Tech Industrial" },
+  { id: "carbon_naka", name: "Carbon Naka Junction, Satpur", shortName: "Carbon Naka", lat: 19.9895, lon: 73.7315, tag: "Industrial Hub" },
+  { id: "vip_industries", name: "VIP Industries Gate, Satpur", shortName: "VIP Satpur", lat: 19.9962, lon: 73.7145, tag: "Industrial Hub" },
+  { id: "mahindra_gate", name: "Mahindra & Mahindra Plant Gate", shortName: "Mahindra Gate", lat: 19.9912, lon: 73.7385, tag: "Automotive Hub" },
+  { id: "trimbak_phata", name: "Trimbak Phata Bypass Point", shortName: "Trimbak Phata", lat: 19.9852, lon: 73.7285, tag: "Highway Junction" },
+
+  // ─── INDIRA NAGAR, PATHARDI & SOUTH HIGHWAY ───
+  { id: "indira_nagar", name: "Indira Nagar Central Circle", shortName: "Indira Nagar", lat: 19.9742, lon: 73.7819, tag: "South Suburb" },
+  { id: "jogging_track_indira", name: "Indira Nagar Jogging Track", shortName: "Jogging Track", lat: 19.9785, lon: 73.7775, tag: "Residential Landmark" },
+  { id: "rane_nagar", name: "Rane Nagar Cross Link", shortName: "Rane Nagar", lat: 19.9695, lon: 73.7785, tag: "Highway Suburban" },
+  { id: "pathardi_phata", name: "Pathardi Phata NH-3 Junction", shortName: "Pathardi Phata", lat: 19.9405, lon: 73.7658, tag: "South Highway Junction" },
+  { id: "pathardi_gaon", name: "Pathardi Village Square", shortName: "Pathardi Gaon", lat: 19.9325, lon: 73.7712, tag: "Suburban Hub" },
+  { id: "wadala_road", name: "Wadala Gaon Road Junction", shortName: "Wadala Road", lat: 19.9815, lon: 73.7865, tag: "Suburban Link" },
+  { id: "kathe_galli", name: "Kathe Galli Junction, Dwarka", shortName: "Kathe Galli", lat: 19.9882, lon: 73.8005, tag: "Arterial Link" },
+
+  // ─── EAST NASHIK, RAILWAY STATION & DEOLALI ───
+  { id: "nashik_road", name: "Nashik Road Railway Terminal", shortName: "Nashik Rd Station", lat: 19.9472, lon: 73.8421, tag: "Railway Terminal" },
+  { id: "bitco_point", name: "Bitco Point Junction, Nashik Road", shortName: "Bitco Point", lat: 19.9515, lon: 73.8375, tag: "Station Commercial" },
+  { id: "jail_road", name: "Jail Road Suburban Circle", shortName: "Jail Road", lat: 19.9580, lon: 73.8325, tag: "Railway Suburban" },
+  { id: "dasak_corner", name: "Jail Road Dasak Corner", shortName: "Dasak Corner", lat: 19.9625, lon: 73.8285, tag: "Suburban Junction" },
+  { id: "datta_mandir", name: "Datta Mandir Road, Nashik Road", shortName: "Datta Mandir", lat: 19.9432, lon: 73.8385, tag: "Residential/Commercial" },
+  { id: "muktidham", name: "Muktidham Temple Gate", shortName: "Muktidham Temple", lat: 19.9455, lon: 73.8475, tag: "Spiritual Landmark" },
+  { id: "upanagar", name: "Upanagar Signal, Nashik Road", shortName: "Upanagar", lat: 19.9652, lon: 73.8215, tag: "Suburban Highway" },
+  { id: "deolali", name: "Deolali Camp Cantonment Zone", shortName: "Deolali Camp", lat: 19.8901, lon: 73.8265, tag: "Cantonment Zone" },
+  { id: "deolali_bazaar", name: "Deolali Cantonment Market", shortName: "Deolali Bazaar", lat: 19.8852, lon: 73.8295, tag: "Cantonment Retail" },
+  { id: "artillery_centre", name: "Artillery Centre Gate, Deolali", shortName: "Artillery Centre", lat: 19.9052, lon: 73.8382, tag: "Military Zone" },
+  { id: "chehdi_phata", name: "Chehdi Phata, Pune Highway", shortName: "Chehdi Phata", lat: 19.9252, lon: 73.8512, tag: "Highway Junction" },
+
+  // ─── NORTH NASHIK, MHASRUL, ADGAON & HIGHWAY ───
+  { id: "mhasrul_gaon", name: "Mhasrul Gaon Gate, Dindori Rd", shortName: "Mhasrul Gaon", lat: 20.0335, lon: 73.8042, tag: "North Suburb" },
+  { id: "rto_dindori", name: "RTO Office Approach, Dindori Rd", shortName: "RTO Dindori Rd", lat: 20.0298, lon: 73.8015, tag: "Civic Transit" },
+  { id: "kasturi_nagar", name: "Kasturi Nagar Cross, Mhasrul", shortName: "Kasturi Nagar", lat: 20.0315, lon: 73.7958, tag: "Residential Suburb" },
+  { id: "makhmalabad", name: "Makhmalabad Link Road Junction", shortName: "Makhmalabad Link", lat: 20.0275, lon: 73.7845, tag: "North Link" },
+  { id: "adgaon_naka", name: "Adgaon Naka Highway Hub", shortName: "Adgaon Naka", lat: 20.0385, lon: 73.8315, tag: "Highway & Medical Hub" },
+  { id: "amrutdham", name: "Amrutdham Shani Mandir Circle", shortName: "Amrutdham", lat: 20.0185, lon: 73.8185, tag: "Academic Corridor" },
+  { id: "rasbihari_school", name: "Rasbihari School Road, Ojhar Link", shortName: "Rasbihari Rd", lat: 20.0215, lon: 73.8265, tag: "Academic Road" },
+  { id: "adgaon_village", name: "Adgaon Village Square", shortName: "Adgaon Gaon", lat: 20.0482, lon: 73.8525, tag: "North-East Suburb" },
+
+  // ─── HOSPITALS & MEDICAL CENTRES ───
+  { id: "wockhardt_hospital", name: "Wockhardt Super Speciality Hospital", shortName: "Wockhardt Hosp", lat: 19.9862, lon: 73.7812, tag: "Super Speciality Medical" },
+  { id: "apollo_hospital", name: "Apollo Hospital, Swaminarayan Nagar", shortName: "Apollo Hospital", lat: 20.0112, lon: 73.8195, tag: "Medical Center" },
+  { id: "sahyadri_hospital", name: "Sahyadri Hospital, Mumbai Naka", shortName: "Sahyadri Hosp", lat: 19.9882, lon: 73.7845, tag: "Super Speciality Medical" },
+  { id: "ashoka_medicover", name: "Ashoka Medicover Hospital, Indira Nagar", shortName: "Medicover Hosp", lat: 19.9725, lon: 73.7795, tag: "Medical Center" },
+  { id: "civil_hospital", name: "Civil Hospital, CBS Chowk", shortName: "Civil Hospital", lat: 19.9995, lon: 73.7822, tag: "Public Health Hub" },
+  { id: "lotus_hospital", name: "Lotus Hospital, Govind Nagar", shortName: "Lotus Hospital", lat: 19.9815, lon: 73.7662, tag: "Medical Center" },
+  { id: "magnum_hospital", name: "Magnum Hospital, Patil Nagar", shortName: "Magnum Hosp", lat: 19.9712, lon: 73.7532, tag: "Medical Hub" },
+  { id: "shatabdi_hospital", name: "Shatabdi Hospital, Seven Heaven", shortName: "Shatabdi Hosp", lat: 19.9652, lon: 73.7712, tag: "Medical Center" },
+  { id: "sujata_birla", name: "Sujata Birla Hospital, Bytco Point", shortName: "Birla Hospital", lat: 19.9532, lon: 73.8392, tag: "Medical Center" },
+
+  // ─── TOURISM, RECREATION & WINERIES ───
+  { id: "sula_vineyards", name: "Sula Vineyards Resort, Govardhan", shortName: "Sula Vineyards", lat: 20.0058, lon: 73.6882, tag: "Tourism & Resort" },
+  { id: "york_winery", name: "York Winery & Tasting Room", shortName: "York Winery", lat: 20.0085, lon: 73.6825, tag: "Tourism & Leisure" },
+  { id: "gangapur_dam", name: "Gangapur Dam Promenade", shortName: "Gangapur Dam", lat: 20.0385, lon: 73.6752, tag: "Scenic & Recreation" },
+  { id: "pandavleni_caves", name: "Pandavleni Caves & Buddha Smarak", shortName: "Pandavleni Caves", lat: 19.9452, lon: 73.7512, tag: "Heritage Landmark" },
+  { id: "phalke_smarak", name: "Dadasaheb Phalke Smarak Park", shortName: "Phalke Smarak", lat: 19.9432, lon: 73.7542, tag: "Cultural Park" },
+  { id: "golf_club_ground", name: "Golf Club Ground, Trimbak Road", shortName: "Golf Club Ground", lat: 19.9942, lon: 73.7682, tag: "Sports & Recreation" },
+  { id: "chambhar_leni", name: "Chambhar Leni Heritage Site, Mhasrul", shortName: "Chambhar Leni", lat: 20.0525, lon: 73.8112, tag: "Heritage Site" },
+  { id: "coin_museum", name: "Indian Institute of Research in Numismatics (Coin Museum)", shortName: "Coin Museum", lat: 19.9582, lon: 73.6685, tag: "Museum & Heritage" },
+
+  // ─── SUBURBAN TOWNS & AIRPORT TERMINAL ───
+  { id: "ozar_airport", name: "Ozar Airport Terminal (HAL Nashik)", shortName: "Ozar Airport", lat: 20.1185, lon: 73.9125, tag: "Airport Terminal" },
+  { id: "hal_township", name: "HAL Township, Ozar", shortName: "HAL Ozar", lat: 20.1012, lon: 73.9225, tag: "Aerospace Township" },
+  { id: "peth_phata", name: "Peth Phata Highway Junction", shortName: "Peth Phata", lat: 20.0212, lon: 73.7812, tag: "Highway Junction" },
+  { id: "dindori_naka", name: "Dindori Naka, Panchavati", shortName: "Dindori Naka", lat: 20.0142, lon: 73.7925, tag: "Highway Entry" },
+  { id: "chandsi_phata", name: "Chandsi Village Phata", shortName: "Chandsi Phata", lat: 20.0412, lon: 73.7552, tag: "Suburban Belt" }
 ];
 
 export const CORRIDORS = [
