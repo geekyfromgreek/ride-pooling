@@ -4,17 +4,19 @@ import { runDispatch } from '../utils/api';
 import { FLEET_VEHICLES, NASHIK_HUBS } from '../data/nashikLocations';
 
 /**
- * PoolIQ Admin Dispatch Screen — Warm Humanist Interface
- * Dedicated operations center for fleet controllers and transit dispatchers.
+ * PoolIQ Admin Dispatch Screen — Enterprise Transit Operations Center
+ * Polished for mission-critical fleet controllers at Ola / Uber scale.
  */
 export default function DispatchScreen({ backendState = null, onRunDispatch = null }) {
   const [selectedStrategy, setSelectedStrategy] = useState('hybrid');
   const [isDispatching, setIsDispatching] = useState(false);
   const [dispatchSuccessMsg, setDispatchSuccessMsg] = useState('');
-  const [activeTab, setActiveTab] = useState('queue'); // 'queue' | 'fleet' | 'audit'
+  const [activeTab, setActiveTab] = useState('fleet'); // Default to 'Assigned Routes' matching Screenshot 2
   const [selectedVehicleId, setSelectedVehicleId] = useState('V1');
-  const [windowTimeLeft, setWindowTimeLeft] = useState(12);
+  const [windowTimeLeft, setWindowTimeLeft] = useState(1);
+  const [expandedVehicleId, setExpandedVehicleId] = useState(null);
 
+  // Dynamic algorithmic batching window countdown (1s -> 15s cycle)
   useEffect(() => {
     const timer = setInterval(() => {
       setWindowTimeLeft((prev) => (prev <= 1 ? 15 : prev - 1));
@@ -26,10 +28,10 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
     {
       id: 'REQ-881',
       passenger: 'Amit Deshpande',
-      pickup: NASHIK_HUBS[0],
-      drop: NASHIK_HUBS[2],
+      pickup: NASHIK_HUBS[0], // CBS Chowk
+      drop: NASHIK_HUBS[2],   // Gangapur Road
       seats: 1,
-      waitTimeSec: 42,
+      waitTimeSec: 38,
       detourCap: '15%',
       fareSolo: 58,
       farePooled: 38
@@ -37,10 +39,10 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
     {
       id: 'REQ-884',
       passenger: 'Sneha More',
-      pickup: NASHIK_HUBS[1],
-      drop: NASHIK_HUBS[4],
+      pickup: NASHIK_HUBS[1], // Satpur MIDC
+      drop: NASHIK_HUBS[4],   // CIDCO
       seats: 1,
-      waitTimeSec: 28,
+      waitTimeSec: 24,
       detourCap: '15%',
       fareSolo: 75,
       farePooled: 51
@@ -48,10 +50,10 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
     {
       id: 'REQ-890',
       passenger: 'Rohit Kadam',
-      pickup: NASHIK_HUBS[3],
-      drop: NASHIK_HUBS[6],
+      pickup: NASHIK_HUBS[3], // Dwarka Circle
+      drop: NASHIK_HUBS[6],   // Nashik Road
       seats: 2,
-      waitTimeSec: 15,
+      waitTimeSec: 12,
       detourCap: '20%',
       fareSolo: 122,
       farePooled: 82
@@ -62,7 +64,7 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
     {
       id: 'BATCH-204',
       time: 'Just now',
-      strategy: 'Hybrid (OR-Tools + LOUD)',
+      strategy: 'Hybrid (OR-Tools MIP)',
       assignedCount: 4,
       totalVehicles: 3,
       avgDetourMin: '+1.8 min',
@@ -73,7 +75,7 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
     {
       id: 'BATCH-203',
       time: '3m ago',
-      strategy: 'Hybrid (OR-Tools + LOUD)',
+      strategy: 'Hybrid (OR-Tools MIP)',
       assignedCount: 3,
       totalVehicles: 2,
       avgDetourMin: '+2.1 min',
@@ -93,7 +95,8 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
           id: bv.id || v.id,
           lat: bv.position ? bv.position.lat : v.lat,
           lon: bv.position ? bv.position.lon : v.lon,
-          seatsOccupied: bv.onboard ? bv.onboard.length : v.seatsOccupied
+          seatsOccupied: bv.onboard ? bv.onboard.length : v.seatsOccupied,
+          speed: bv.speed || v.speed
         };
       });
     }
@@ -104,19 +107,19 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
     setIsDispatching(true);
     setDispatchSuccessMsg('');
     try {
-      const res = await runDispatch(selectedStrategy);
+      await runDispatch(selectedStrategy);
       const assignedCount = pendingRequests.length;
-      
+
       const newLog = {
         id: `BATCH-${Math.floor(205 + Math.random() * 50)}`,
         time: 'Just now',
         strategy: selectedStrategy === 'hybrid' ? 'Hybrid (OR-Tools)' : selectedStrategy.toUpperCase(),
         assignedCount: assignedCount || 3,
-        totalVehicles: 3,
-        avgDetourMin: '+1.9 min',
+        totalVehicles: 4,
+        avgDetourMin: '+1.7 min',
         costSavings: `₹${(assignedCount * 22) || 66}.00 (33.4%)`,
-        solveLatency: `${(7 + Math.random() * 5).toFixed(1)} ms`,
-        audit: 'Optimal pickup insertion verified. SLA guaranteed.'
+        solveLatency: `${(7 + Math.random() * 4).toFixed(1)} ms`,
+        audit: 'Optimal pickup insertion verified. 100% SLA compliance guaranteed.'
       };
 
       setDispatchLogs((prev) => [newLog, ...prev]);
@@ -136,17 +139,17 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
   const handleInjectSimulatedRequest = () => {
     const originHub = NASHIK_HUBS[Math.floor(Math.random() * (NASHIK_HUBS.length / 2))];
     const destHub = NASHIK_HUBS[Math.floor(NASHIK_HUBS.length / 2 + Math.random() * (NASHIK_HUBS.length / 2))];
-    const names = ['Kavita Patil', 'Sanjay Jadhav', 'Deepak Pawar', 'Meera Rao', 'Vinay Joshi'];
+    const names = ['Kavita Patil', 'Sanjay Jadhav', 'Deepak Pawar', 'Meera Rao', 'Vinay Joshi', 'Pooja Kadam'];
     const newReq = {
       id: `REQ-${Math.floor(892 + Math.random() * 90)}`,
       passenger: names[Math.floor(Math.random() * names.length)],
       pickup: originHub,
       drop: destHub,
       seats: Math.random() > 0.75 ? 2 : 1,
-      waitTimeSec: 5,
+      waitTimeSec: 4,
       detourCap: '15%',
-      fareSolo: Math.round(45 + Math.random() * 40),
-      farePooled: Math.round(30 + Math.random() * 25)
+      fareSolo: Math.round(48 + Math.random() * 35),
+      farePooled: Math.round(32 + Math.random() * 22)
     };
     setPendingRequests((prev) => [newReq, ...prev]);
   };
@@ -155,7 +158,9 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
 
   return (
     <div className="flex-1 flex flex-col w-full px-4 pt-1 pb-8 max-w-md mx-auto select-none gap-4 animate-fade-in">
-      {/* Header Banner */}
+      {/* ─────────────────────────────────────────────────────────────
+          1. HEADER BANNER (Matching Screenshot 2)
+      ───────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between pt-1">
         <div>
           <h2 className="text-[20px] font-bold text-[#1D1D22] tracking-tight leading-none">
@@ -172,16 +177,18 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
       </div>
 
       {dispatchSuccessMsg && (
-        <div className="bg-[#FAF7F2] border border-[#1D1D22] text-[#1D1D22] px-3 py-2 rounded-2xl text-xs flex items-center gap-2 animate-fade-in shadow-xs">
+        <div className="bg-[#FAF7F2] border border-[#1D1D22] text-[#1D1D22] px-3.5 py-2.5 rounded-2xl text-xs flex items-center gap-2 animate-fade-in shadow-xs">
           <span className="material-symbols-outlined text-[16px] text-[#F5C451]">check_circle</span>
-          <span>{dispatchSuccessMsg}</span>
+          <span className="font-semibold">{dispatchSuccessMsg}</span>
         </div>
       )}
 
-      {/* Solver Controls Card */}
+      {/* ─────────────────────────────────────────────────────────────
+          2. DISPATCH STRATEGY & ACTIONS CARD (Matching Screenshot 2)
+      ───────────────────────────────────────────────────────────── */}
       <div className="bg-white rounded-[24px] p-5 border border-[#EAE5DC] shadow-[0_4px_20px_rgba(29,29,34,0.06)] flex flex-col gap-3.5">
         <div className="flex items-center justify-between">
-          <span className="text-[12px] font-medium text-[#787571] uppercase tracking-wide">
+          <span className="text-[12px] font-bold text-[#787571] uppercase tracking-wide">
             Dispatch Strategy
           </span>
           <select
@@ -192,13 +199,14 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
             <option value="hybrid">Hybrid (OR-Tools) [Recommended]</option>
             <option value="greedy_fcfs">Greedy Insertion (FCFS)</option>
             <option value="batch_matching">Bipartite Batch Matching</option>
+            <option value="reinforcement">Reinforcement Corridor Solver</option>
           </select>
         </div>
 
         <div className="flex items-center gap-2 pt-1">
           <button
             onClick={handleInjectSimulatedRequest}
-            className="flex-1 h-11 rounded-full bg-[#FAF7F2] hover:bg-[#F4EFEB] text-[#1D1D22] text-xs font-semibold border border-[#EAE5DC] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            className="flex-1 h-11 rounded-full bg-[#FAF7F2] hover:bg-[#F4EFEB] text-[#1D1D22] text-xs font-semibold border border-[#EAE5DC] flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
           >
             <span className="material-symbols-outlined text-[16px]">person_add</span>
             <span>+ Simulate Rider</span>
@@ -208,7 +216,7 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
             disabled={isDispatching}
             className="flex-1 h-11 rounded-full bg-[#1D1D22] hover:bg-black text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
           >
-            <span className={`material-symbols-outlined text-[16px] ${isDispatching ? 'animate-spin' : ''}`}>
+            <span className={`material-symbols-outlined text-[16px] ${isDispatching ? 'animate-spin' : 'text-[#F5C451]'}`}>
               {isDispatching ? 'progress_activity' : 'bolt'}
             </span>
             <span>{isDispatching ? 'Solving...' : 'Dispatch Batch'}</span>
@@ -216,26 +224,32 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
         </div>
       </div>
 
-      {/* Map View */}
-      <div className="relative w-full h-[220px] rounded-[20px] overflow-hidden border border-[#EAE5DC] shadow-[0_2px_12px_rgba(29,29,34,0.04)] bg-[#EDE9E1]">
+      {/* ─────────────────────────────────────────────────────────────
+          3. LIVE OPERATIONAL FLEET MAP (Matching Screenshot 2)
+      ───────────────────────────────────────────────────────────── */}
+      <div className="relative w-full h-[230px] rounded-[24px] overflow-hidden border border-[#EAE5DC] shadow-[0_4px_16px_rgba(29,29,34,0.06)] bg-[#EDE9E1]">
         <LeafletMap
           center={[19.9977, 73.7803]}
           zoom={13}
           fleetVehicles={fleet}
           selectedVehicleId={selectedVehicleId}
           onVehicleSelect={(veh) => setSelectedVehicleId(veh.id)}
-          height="220px"
+          height="230px"
         />
+        {/* Floating Top Pill for Selected Vehicle */}
         <div className="absolute top-3 left-3 z-[400] pointer-events-none">
-          <div className="bg-white/95 backdrop-blur-md px-3 py-1 rounded-full border border-[#EAE5DC] shadow-sm flex items-center gap-1.5 text-xs font-semibold text-[#1D1D22]">
+          <div className="bg-white/95 backdrop-blur-md px-3 py-1 rounded-full border border-[#EAE5DC] shadow-sm flex items-center gap-1.5 text-xs font-bold text-[#1D1D22]">
             <span className="w-2 h-2 rounded-full bg-[#1D1D22]"></span>
             <span>Vehicle {selectedVehicle.id} ({selectedVehicle.driver})</span>
           </div>
         </div>
       </div>
 
-      {/* Operational Tabs */}
+      {/* ─────────────────────────────────────────────────────────────
+          4. ENTERPRISE OPS ROSTER CARD (Matching Screenshot 2)
+      ───────────────────────────────────────────────────────────── */}
       <div className="bg-white rounded-[24px] p-5 border border-[#EAE5DC] shadow-[0_4px_20px_rgba(29,29,34,0.06)] flex flex-col gap-3.5">
+        {/* 3 Navigation Tabs */}
         <div className="flex items-center gap-1.5 border-b border-[#EAE5DC] pb-3">
           <button
             onClick={() => setActiveTab('queue')}
@@ -269,7 +283,7 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
           </button>
         </div>
 
-        {/* Tab 1: Queue */}
+        {/* ── TAB 1: PENDING REQUESTS ── */}
         {activeTab === 'queue' && (
           <div className="flex flex-col gap-2.5">
             {pendingRequests.length === 0 ? (
@@ -306,37 +320,60 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
           </div>
         )}
 
-        {/* Tab 2: Fleet */}
+        {/* ── TAB 2: ASSIGNED ROUTES (Matching Screenshot 2) ── */}
         {activeTab === 'fleet' && (
           <div className="flex flex-col gap-2.5">
-            {fleet.map((v) => (
-              <div
-                key={v.id}
-                onClick={() => setSelectedVehicleId(v.id)}
-                className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                  selectedVehicleId === v.id
-                    ? 'bg-[#FAF7F2] border-[#1D1D22]'
-                    : 'bg-white border-[#EAE5DC] hover:bg-[#FAF7F2]'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[13px] font-bold text-[#1D1D22]">Vehicle {v.id}</span>
-                    <span className="text-xs text-[#787571]">· {v.driver}</span>
+            {fleet.map((v) => {
+              const isSelected = selectedVehicleId === v.id;
+              const isExpanded = expandedVehicleId === v.id;
+              return (
+                <div
+                  key={v.id}
+                  onClick={() => {
+                    setSelectedVehicleId(v.id);
+                    setExpandedVehicleId(isExpanded ? null : v.id);
+                  }}
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col gap-2 ${
+                    isSelected
+                      ? 'bg-[#FAF7F2] border-[#1D1D22] shadow-xs'
+                      : 'bg-white border-[#EAE5DC] hover:bg-[#FAF7F2]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[13.5px] font-bold text-[#1D1D22]">Vehicle {v.id}</span>
+                        <span className="text-xs text-[#787571]">· {v.driver}</span>
+                      </div>
+                      <span className="text-[11.5px] text-[#787571] mt-0.5 block">
+                        {v.routeVector}
+                      </span>
+                    </div>
+                    <span className="text-xs font-bold text-[#1D1D22]">
+                      {v.seatsOccupied || 0}/4 Seats
+                    </span>
                   </div>
-                  <span className="text-[11px] text-[#787571] truncate block max-w-[200px]">
-                    {v.routeVector}
-                  </span>
+
+                  {/* Expanded Telematics Drawer */}
+                  {isExpanded && (
+                    <div className="pt-2 border-t border-[#EAE5DC] flex flex-col gap-1.5 text-xs text-[#787571] animate-fade-in">
+                      <div className="flex items-center justify-between">
+                        <span>Model: <strong className="text-[#1D1D22]">{v.model}</strong></span>
+                        <span>Plate: <strong className="text-[#1D1D22]">{v.license}</strong></span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Speed: <strong className="text-[#1D1D22]">{v.speed}</strong></span>
+                        <span>Battery SOC: <strong className="text-[#1D1D22]">{v.soc}</strong></span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <span className="text-xs font-bold text-[#1D1D22]">
-                  {v.seatsOccupied || 0}/4 Seats
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
-        {/* Tab 3: Audit */}
+        {/* ── TAB 3: AUDIT LOG ── */}
         {activeTab === 'audit' && (
           <div className="flex flex-col gap-2.5">
             {dispatchLogs.map((log) => (
@@ -358,6 +395,28 @@ export default function DispatchScreen({ backendState = null, onRunDispatch = nu
             ))}
           </div>
         )}
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          5. ENTERPRISE OPERATIONAL KPIs (Uber/Ola Operations Standard)
+      ───────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-4 gap-2">
+        <div className="bg-white p-2.5 rounded-2xl border border-[#EAE5DC] flex flex-col items-center text-center shadow-2xs">
+          <span className="text-[9.5px] font-bold text-[#787571] uppercase">Match SLA</span>
+          <span className="text-[13px] font-bold text-[#1D1D22] mt-0.5">99.4%</span>
+        </div>
+        <div className="bg-white p-2.5 rounded-2xl border border-[#EAE5DC] flex flex-col items-center text-center shadow-2xs">
+          <span className="text-[9.5px] font-bold text-[#787571] uppercase">Solver</span>
+          <span className="text-[13px] font-bold text-[#1D1D22] mt-0.5">8.4 ms</span>
+        </div>
+        <div className="bg-white p-2.5 rounded-2xl border border-[#EAE5DC] flex flex-col items-center text-center shadow-2xs">
+          <span className="text-[9.5px] font-bold text-[#787571] uppercase">Detour Cap</span>
+          <span className="text-[13px] font-bold text-[#1D1D22] mt-0.5">&lt; 15%</span>
+        </div>
+        <div className="bg-white p-2.5 rounded-2xl border border-[#EAE5DC] flex flex-col items-center text-center shadow-2xs">
+          <span className="text-[9.5px] font-bold text-[#787571] uppercase">Active Fleet</span>
+          <span className="text-[13px] font-bold text-[#1D1D22] mt-0.5">6/6 EV</span>
+        </div>
       </div>
     </div>
   );

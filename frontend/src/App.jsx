@@ -170,28 +170,34 @@ export default function App() {
     }
   };
 
-  const handleRequestRide = async ({ origin, dest, sharedOrigin, soloFare, pooledFare }) => {
-    const res = await submitRideRequest({
-      pickup: origin,
-      drop: dest,
-      seats: 1
-    });
-    if (res && res.id) {
-      setActiveRideRequest({
-        id: res.id,
-        origin,
-        dest,
-        sharedOrigin,
-        soloFare,
-        pooledFare
+  const handleRequestRide = async ({ origin, dest, sharedOrigin, soloFare, pooledFare, harmonyPrefs }) => {
+    let res = null;
+    try {
+      res = await submitRideRequest({
+        pickup: origin,
+        drop: dest,
+        seats: 1
       });
+    } catch (e) {
+      console.warn('Ride request fallback:', e);
     }
+    const rideId = res && res.id ? res.id : `R_${Math.random().toString(16).substring(2, 8)}`;
+    setActiveRideRequest({
+      id: rideId,
+      origin,
+      dest,
+      sharedOrigin,
+      soloFare,
+      pooledFare,
+      harmonyPrefs
+    });
   };
 
   const handleCancelRide = () => {
     setActiveRideRequest(null);
     setAssignedVehicle(null);
     setPoolStage('request');
+    setActiveTab('pool');
   };
 
   const handleDispatchRun = async () => {
@@ -253,6 +259,7 @@ export default function App() {
             setPoolStage={setPoolStage}
             onRequestRide={handleRequestRide}
             onCancelRide={handleCancelRide}
+            onNavigateToJourney={() => setActiveTab('journey')}
             backendWindow={backendState ? backendState.window : null}
             assignedVehicle={assignedVehicle}
             preselectedHubs={preselectedHubs}
@@ -263,6 +270,8 @@ export default function App() {
           <JourneyScreen
             activeRide={activeRideRequest}
             assignedVehicle={assignedVehicle}
+            onCancelRide={handleCancelRide}
+            onBackToRides={() => setActiveTab('pool')}
           />
         )}
 

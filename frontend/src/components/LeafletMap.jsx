@@ -32,6 +32,7 @@ export default function LeafletMap({
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const dynamicLayersRef = useRef([]);
+  const vehicleMarkerRef = useRef(null);
 
   // Initialize Leaflet Map once
   useEffect(() => {
@@ -91,6 +92,10 @@ export default function LeafletMap({
       clearTimeout(timer);
       clearTimeout(timer2);
       resizeObserver.disconnect();
+      if (vehicleMarkerRef.current) {
+        try { vehicleMarkerRef.current.remove(); } catch (e) {}
+        vehicleMarkerRef.current = null;
+      }
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -450,17 +455,15 @@ export default function LeafletMap({
   }, [center, zoom, pickup, drop, sharedOrigin, approachRouteCoords, routeCoords, corridors, selectedCorridorId, fleetVehicles, selectedVehicleId, diffPolyline, diffMode, showRadar, radarCoords, searchRadiusMeters]);
 
   // ─────────────────────────────────────────────────────────────
-  // 7. REAL-TIME SMOOTH ANIMATED CAB MARKER (Dedicated Ref)
+  // 7. REAL-TIME SMOOTH ANIMATED CAB MARKER (Zomato/Blinkit Style)
   // ─────────────────────────────────────────────────────────────
-  const vehicleMarkerRef = useRef(null);
-
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const map = mapInstanceRef.current;
 
     if (!vehicleCoord || typeof vehicleCoord.lat !== 'number' || typeof vehicleCoord.lon !== 'number') {
       if (vehicleMarkerRef.current) {
-        vehicleMarkerRef.current.remove();
+        try { vehicleMarkerRef.current.remove(); } catch (e) {}
         vehicleMarkerRef.current = null;
       }
       return;
@@ -474,43 +477,71 @@ export default function LeafletMap({
     const vehicleIcon = L.divIcon({
       className: 'custom-vehicle-moving-node',
       html: `
+        <style>
+          @keyframes cabPingWave {
+            0% { transform: scale(0.85); opacity: 0.95; }
+            75%, 100% { transform: scale(2.4); opacity: 0; }
+          }
+          @keyframes cabGlowPulse {
+            0%, 100% { opacity: 0.35; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.18); }
+          }
+        </style>
         <div style="position: relative; display: flex; flex-direction: column; align-items: center; pointer-events: none;">
-          <!-- Floating Status Pill -->
-          <div style="background: rgba(255,255,255,0.96); backdrop-filter: blur(6px); padding: 3px 9px; border-radius: 9999px; border: 1px solid #EAE5DC; box-shadow: 0 4px 12px rgba(29,29,34,0.12); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10px; font-weight: 700; color: #1D1D22; margin-bottom: 4px; white-space: nowrap; display: flex; align-items: center; gap: 5px;">
-            <span style="width: 7px; height: 7px; border-radius: 50%; background: ${isAtPickup ? '#10B981' : isCompleted ? '#3B82F6' : '#F5C451'}; ${isAtPickup ? 'box-shadow: 0 0 6px #10B981;' : ''}"></span>
+          <!-- Floating Status Pill like Zomato/Blinkit -->
+          <div style="background: rgba(29,29,34,0.96); backdrop-filter: blur(8px); padding: 4px 10px; border-radius: 9999px; border: 1.5px solid #F5C451; box-shadow: 0 4px 14px rgba(0,0,0,0.22); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10.5px; font-weight: 700; color: #FFFFFF; margin-bottom: 5px; white-space: nowrap; display: flex; align-items: center; gap: 6px;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: ${isAtPickup ? '#10B981' : isCompleted ? '#3B82F6' : '#F5C451'}; ${isAtPickup ? 'box-shadow: 0 0 8px #10B981;' : 'box-shadow: 0 0 6px #F5C451;'}"></span>
             <span>${label}</span>
           </div>
 
           <!-- Cab Marker Container with Directional Rotation -->
-          <div style="position: relative; width: 38px; height: 38px;">
+          <div style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
             ${isAtPickup ? `
-              <!-- Small cab arrival pulse animation when pickup arrives -->
-              <div style="position: absolute; inset: -7px; border-radius: 50%; border: 2.5px solid #10B981; opacity: 0.85; animation: ping 1.2s cubic-bezier(0,0,0.2,1) infinite;"></div>
-              <div style="position: absolute; inset: -3px; border-radius: 50%; background: rgba(16,185,129,0.15); animation: pulse 1.5s infinite;"></div>
+              <!-- Green Arrival Ripple Wave (Zomato/Blinkit arrival alert) -->
+              <div style="position: absolute; inset: -10px; border-radius: 50%; border: 3px solid #10B981; animation: cabPingWave 1.4s cubic-bezier(0,0,0.2,1) infinite;"></div>
+              <div style="position: absolute; inset: -4px; border-radius: 50%; background: rgba(16,185,129,0.25); animation: cabGlowPulse 1.4s infinite;"></div>
             ` : ''}
-            <div style="width: 38px; height: 38px; border-radius: 50%; background: #1D1D22; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 16px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; transform: rotate(${bearing}deg); transition: transform 0.12s ease;">
-              <!-- Sleek Top-down Cab Vector -->
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <rect x="6.5" y="3" width="11" height="18" rx="3.5" fill="#1D1D22" stroke="#FFFFFF" stroke-width="1.3"/>
-                <path d="M7.5 7.5H16.5L15.5 10.5H8.5L7.5 7.5Z" fill="#F5C451"/>
-                <path d="M8 17H16L15.5 18.5H8.5L8 17Z" fill="#F5C451" opacity="0.8"/>
-                <circle cx="8" cy="4.2" r="1" fill="#FDE047"/>
-                <circle cx="16" cy="4.2" r="1" fill="#FDE047"/>
+
+            <!-- Directional Cab Icon rotated to Road Angle -->
+            <div style="position: relative; width: 42px; height: 42px; border-radius: 50%; background: #1D1D22; border: 2.5px solid #FFFFFF; box-shadow: 0 6px 18px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; transform: rotate(${bearing}deg); transition: transform 0.1s linear;">
+              <!-- Authentic Top-down Cab Vector (Zomato/Blinkit/Uber) -->
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <!-- Front Wheels -->
+                <rect x="2.5" y="4.5" width="2" height="4" rx="1" fill="#1D1D22"/>
+                <rect x="19.5" y="4.5" width="2" height="4" rx="1" fill="#1D1D22"/>
+                <!-- Rear Wheels -->
+                <rect x="2.5" y="15.5" width="2" height="4" rx="1" fill="#1D1D22"/>
+                <rect x="19.5" y="15.5" width="2" height="4" rx="1" fill="#1D1D22"/>
+                <!-- Car Body -->
+                <rect x="5" y="2" width="14" height="20" rx="4.5" fill="#F5C451" stroke="#FFFFFF" stroke-width="1.2"/>
+                <!-- Windshield Front -->
+                <path d="M7 6.5H17L15.5 10H8.5L7 6.5Z" fill="#1D1D22"/>
+                <!-- Roof Taxi Sign -->
+                <rect x="9.5" y="11" width="5" height="2.2" rx="0.8" fill="#FFFFFF"/>
+                <!-- Rear Glass -->
+                <rect x="7.5" y="15.5" width="9" height="2.5" rx="0.8" fill="#1D1D22"/>
+                <!-- Headlights (Forward) -->
+                <circle cx="7" cy="3.5" r="1.1" fill="#FFFFFF"/>
+                <circle cx="17" cy="3.5" r="1.1" fill="#FFFFFF"/>
+                <!-- Taillights (Rear) -->
+                <rect x="6.5" y="20.5" width="2.5" height="1" rx="0.5" fill="#EF4444"/>
+                <rect x="15" y="20.5" width="2.5" height="1" rx="0.5" fill="#EF4444"/>
               </svg>
             </div>
-            <!-- Active Indicator Badge -->
-            <div style="position: absolute; top: -1px; right: -1px; width: 10px; height: 10px; border-radius: 50%; background: ${isAtPickup ? '#10B981' : isCompleted ? '#3B82F6' : '#F5C451'}; border: 2px solid #FFFFFF; box-shadow: 0 1px 4px rgba(0,0,0,0.15);"></div>
+
+            <!-- Active Indicator Dot -->
+            <div style="position: absolute; top: -1px; right: -1px; width: 11px; height: 11px; border-radius: 50%; background: ${isAtPickup ? '#10B981' : isCompleted ? '#3B82F6' : '#F5C451'}; border: 2px solid #FFFFFF; box-shadow: 0 1px 4px rgba(0,0,0,0.2);"></div>
           </div>
         </div>
       `,
-      iconSize: [140, 62],
-      iconAnchor: [70, 50]
+      iconSize: [140, 68],
+      iconAnchor: [70, 52]
     });
 
-    if (!vehicleMarkerRef.current) {
+    if (!vehicleMarkerRef.current || !map.hasLayer(vehicleMarkerRef.current)) {
       vehicleMarkerRef.current = L.marker([vehicleCoord.lat, vehicleCoord.lon], {
         icon: vehicleIcon,
-        zIndexOffset: 1200
+        zIndexOffset: 3000
       }).addTo(map);
     } else {
       vehicleMarkerRef.current.setLatLng([vehicleCoord.lat, vehicleCoord.lon]);

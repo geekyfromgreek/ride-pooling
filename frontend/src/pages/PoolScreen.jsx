@@ -71,6 +71,7 @@ export default function PoolScreen({
   setPoolStage,
   onRequestRide,
   onCancelRide,
+  onNavigateToJourney = null,
   backendWindow = null,
   assignedVehicle = null,
   preselectedHubs = null
@@ -389,7 +390,12 @@ export default function PoolScreen({
         const next = prev + 6;
         if (next >= 100) {
           clearInterval(timer);
-          setTimeout(() => setPoolStage('active'), 400);
+          setPoolStage('active');
+          if (onNavigateToJourney) {
+            setTimeout(() => {
+              onNavigateToJourney();
+            }, 350);
+          }
           return 100;
         }
         const sIdx = Math.min(matchingStatuses.length - 1, Math.floor((next / 100) * matchingStatuses.length));
@@ -399,7 +405,7 @@ export default function PoolScreen({
     }, 300);
 
     return () => clearInterval(timer);
-  }, [poolStage, setPoolStage]);
+  }, [poolStage, setPoolStage, onNavigateToJourney]);
 
   // Co-Rider Harmony Preferences (from Screenshot 3)
   const [harmonyPrefs, setHarmonyPrefs] = useState({
@@ -1219,18 +1225,29 @@ export default function PoolScreen({
               </div>
             </div>
 
-            {/* Primary Action: Cancel Ride Button */}
-            <div className="pt-1">
+            {/* Primary Actions: View Journey & Cancel Ride */}
+            <div className="pt-1 flex flex-col gap-2">
+              {onNavigateToJourney && (
+                <button
+                  id="view-journey-btn"
+                  onClick={onNavigateToJourney}
+                  className="w-full h-12 rounded-full bg-[#1D1D22] hover:bg-black text-white font-semibold text-[14px] flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[17px] text-[#F5C451]">near_me</span>
+                  <span>Track Live Shared Journey</span>
+                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </button>
+              )}
               <button
                 id="cancel-active-btn"
                 onClick={handleActiveCancel}
-                className={`w-full h-12 rounded-full border transition-all flex items-center justify-center gap-1.5 shadow-sm font-semibold text-[14px] cursor-pointer ${
+                className={`w-full h-11 rounded-full border transition-all flex items-center justify-center gap-1.5 shadow-xs font-semibold text-[13.5px] cursor-pointer ${
                   cancelIsConfirm
                     ? 'bg-red-50 border-red-300 text-red-600'
                     : 'border-[#EAE5DC] bg-white text-[#1D1D22] hover:bg-[#FAF7F2]'
                 }`}
               >
-                <span className="material-symbols-outlined text-[17px] text-[#787571]">
+                <span className="material-symbols-outlined text-[16px] text-[#787571]">
                   {cancelIsConfirm ? 'warning' : 'close'}
                 </span>
                 <span>{cancelIsConfirm ? 'Confirm Cancellation?' : 'Cancel Ride'}</span>
