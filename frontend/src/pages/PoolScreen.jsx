@@ -263,7 +263,12 @@ export default function PoolScreen({
   const destHub = NASHIK_HUBS[destIndex] || NASHIK_HUBS[2];
 
   // Upstream Shared Ride Origin
-  const [sharedOriginSeed, setSharedOriginSeed] = useState(() => Math.floor(Math.random() * 10000));
+  const [sharedOriginSeed, setSharedOriginSeed] = useState(() => Math.floor(Math.random() * 1000000));
+
+  useEffect(() => {
+    setSharedOriginSeed(Math.floor(Math.random() * 1000000));
+  }, [originHub?.lat, originHub?.lon, destHub?.lat, destHub?.lon]);
+
   const sharedOriginHub = useMemo(() => {
     return getSharedRideOrigin(originHub, destHub, sharedOriginSeed);
   }, [originHub, destHub, sharedOriginSeed]);
@@ -509,6 +514,8 @@ export default function PoolScreen({
   const hasArrivedAtPickup = simPhase === 'arrived_pickup' || simPhase === 'in_transit' || simPhase === 'completed';
 
   const currentVehicleCoord = useMemo(() => {
+    const isFemale = assignedDriver?.gender === 'female';
+
     if (simPhase === 'approaching') {
       const poly = approachRouteCoords.length > 1 ? approachRouteCoords : [
         [sharedOriginHub.lat, sharedOriginHub.lon],
@@ -524,7 +531,9 @@ export default function PoolScreen({
         isAtPickup: false,
         isCompleted: false,
         coRidersCount: 1, // Driver + Co-rider 1 already onboard
-        label: `Tata Tigor EV · Arriving in ~${minsLeft}m`
+        isDriverFemale: isFemale,
+        driverGender: assignedDriver?.gender || 'male',
+        label: `${assignedDriver.model || 'Tata Tigor EV'} · Arriving in ~${minsLeft}m`
       };
     }
 
@@ -540,7 +549,9 @@ export default function PoolScreen({
         isAtPickup: true,
         isCompleted: false,
         coRidersCount: 1, // At pickup, boarding user
-        label: `Driver Arrived · Boarding (${boardingCountdown}s)`
+        isDriverFemale: isFemale,
+        driverGender: assignedDriver?.gender || 'male',
+        label: `${assignedDriver.name || 'Driver'} at Pickup · Boarding (${boardingCountdown}s)`
       };
     }
 
@@ -559,6 +570,8 @@ export default function PoolScreen({
         isAtPickup: false,
         isCompleted: false,
         coRidersCount: 2, // Driver + Co-rider 1 + User
+        isDriverFemale: isFemale,
+        driverGender: assignedDriver?.gender || 'male',
         label: `En Route to ${destHub.shortName} · ${estMin}m`
       };
     }
@@ -575,9 +588,11 @@ export default function PoolScreen({
       isAtPickup: false,
       isCompleted: true,
       coRidersCount: 2,
+      isDriverFemale: isFemale,
+      driverGender: assignedDriver?.gender || 'male',
       label: 'Arrived at Destination'
     };
-  }, [simPhase, simProgress, approachRouteCoords, activeRouteCoords, sharedOriginHub, originHub, destHub, boardingCountdown, estTimeMin]);
+  }, [simPhase, simProgress, approachRouteCoords, activeRouteCoords, sharedOriginHub, originHub, destHub, boardingCountdown, estTimeMin, assignedDriver]);
 
   // Cancel flow with confirmation state
   const [cancelIsConfirm, setCancelIsConfirm] = useState(false);

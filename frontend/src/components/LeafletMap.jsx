@@ -479,6 +479,8 @@ export default function LeafletMap({
       ? vehicleCoord.coRidersCount 
       : (vehicleCoord.isApproaching ? 1 : 2);
 
+    const isDriverFemale = Boolean(vehicleCoord.isDriverFemale || vehicleCoord.driverGender === 'female');
+
     const vehicleIcon = L.divIcon({
       className: 'custom-vehicle-moving-node',
       html: `
@@ -499,7 +501,7 @@ export default function LeafletMap({
             <span>${label}</span>
           </div>
 
-          <!-- Pure Car Cutout Container (Sleek Compact Size) -->
+          <!-- Pure Car Cutout Container -->
           <div style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
             ${isAtPickup ? `
               <!-- Green Arrival Ripple Wave (Zomato/Blinkit arrival alert) -->
@@ -509,7 +511,7 @@ export default function LeafletMap({
 
             <!-- Compact Pure Car Cutout Rotated to Road Bearing -->
             <div style="transform: rotate(${bearing}deg); transition: transform 0.1s linear; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));">
-              <svg width="18" height="36" viewBox="0 0 24 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="22" height="44" viewBox="0 0 24 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <!-- Front Wheels -->
                 <rect x="0.5" y="8" width="1.8" height="6" rx="0.8" fill="#18181B"/>
                 <rect x="21.7" y="8" width="1.8" height="6" rx="0.8" fill="#18181B"/>
@@ -527,31 +529,73 @@ export default function LeafletMap({
                 <!-- Front Windshield (Dark Curved Glass) -->
                 <path d="M4.5 11 Q12 9 19.5 11 L18 15 Q12 13.5 6 15 Z" fill="#18181B"/>
 
-                <!-- Panoramic Cabin Glass Interior with Driver & Passengers -->
+                <!-- Panoramic Cabin Glass Interior (Deep Charcoal Floor) -->
                 <rect x="4.5" y="15" width="15" height="21" rx="3" fill="#18181B" stroke="#27272A" stroke-width="0.7"/>
 
-                <!-- Driver Seat (Front Right in India - RHD) -->
-                <path d="M14 16.5 A1.8 1.8 0 0 1 17.5 16.5" stroke="#F5C451" stroke-width="0.9" fill="none"/>
-                <circle cx="15.8" cy="19.5" r="2.2" fill="#FFFFFF"/>
-                <circle cx="15.8" cy="19.5" r="0.9" fill="#18181B"/>
+                <!-- Front Left Passenger Seat (Empty Contour) -->
+                <rect x="5.8" y="17.0" width="4.8" height="5.0" rx="1.2" fill="#27272A" stroke="#3F3F46" stroke-width="0.5" opacity="0.4"/>
+                <rect x="6.4" y="16.0" width="3.6" height="1.2" rx="0.6" fill="#3F3F46" opacity="0.4"/>
 
-                <!-- Front Left Passenger Seat -->
-                <rect x="5.5" y="17.5" width="4.5" height="4.5" rx="1.2" fill="#27272A" opacity="0.3"/>
+                <!-- ═══════════════════════════════════════════════════════════ -->
+                <!-- DRIVER (Front Right - India RHD): Human with Driver Cap    -->
+                <!-- ═══════════════════════════════════════════════════════════ -->
+                <!-- Steering Wheel in front of Driver -->
+                <path d="M14.2 16.2 A1.8 1.4 0 0 1 17.4 16.2" stroke="#CBD5E1" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+                
+                <!-- Driver Uniform Shoulders -->
+                <path d="M13.2 22.2 Q15.8 21.0 18.4 22.2 L18.4 23.6 Q15.8 22.6 13.2 23.6 Z" fill="#334155"/>
+                
+                <!-- Driver Head Base & Ears -->
+                <circle cx="15.8" cy="19.2" r="2.1" fill="#FDDCB1"/>
+                <circle cx="13.6" cy="19.2" r="0.55" fill="#FDDCB1"/>
+                <circle cx="18.0" cy="19.2" r="0.55" fill="#FDDCB1"/>
+                
+                ${isDriverFemale ? `
+                  <!-- Female Driver Hair Strands / Low Bun at back -->
+                  <path d="M14.2 21.0 Q15.8 22.6 17.4 21.0" fill="#3F2E23" stroke="#3F2E23" stroke-width="0.6"/>
+                ` : ''}
 
-                <!-- Rear Left Seat (Co-Rider 1) -->
+                <!-- Driver Cap (Peaked Chauffeur / Pilot Cap) -->
+                <ellipse cx="15.8" cy="19.2" rx="2.1" ry="1.7" fill="#0F172A"/>
+                <!-- Gold Driver Cap Emblem Band -->
+                <path d="M13.9 18.4 Q15.8 17.5 17.7 18.4" stroke="#F5C451" stroke-width="0.55" fill="none"/>
+                <!-- Cap Visor / Peak extending forward toward windshield -->
+                <path d="M14.2 18.0 Q15.8 16.4 17.4 18.0 Z" fill="#020617" stroke="#0F172A" stroke-width="0.4"/>
+
+                <!-- ═══════════════════════════════════════════════════════════ -->
+                <!-- CO-RIDER 1 (Rear Left): Normal Human (Head + Shoulders)     -->
+                <!-- ═══════════════════════════════════════════════════════════ -->
                 ${coRidersCount >= 1 ? `
-                  <circle cx="8" cy="29.5" r="2.2" fill="#F5C451"/>
-                  <circle cx="8" cy="29.5" r="0.9" fill="#18181B"/>
+                  <!-- Passenger Shoulders (Warm Amber) -->
+                  <path d="M5.9 32.2 Q8.5 31.0 11.1 32.2 L11.1 33.6 Q8.5 32.6 5.9 33.6 Z" fill="#D97706" opacity="0.95"/>
+                  <!-- Passenger Head Base & Ears -->
+                  <circle cx="8.5" cy="29.0" r="2.0" fill="#FDDCB1"/>
+                  <circle cx="6.4" cy="29.0" r="0.5" fill="#FDDCB1"/>
+                  <circle cx="10.6" cy="29.0" r="0.5" fill="#FDDCB1"/>
+                  <!-- Normal Human Hair (Natural Haircut, No Cap) -->
+                  <path d="M6.6 29.2 Q6.6 27.0 8.5 27.0 Q10.4 27.0 10.4 29.2 Q8.5 28.3 6.6 29.2 Z" fill="#3F2E23"/>
                 ` : `
-                  <rect x="5.5" y="27.5" width="4.5" height="4.5" rx="1.2" fill="#27272A" opacity="0.25"/>
+                  <!-- Empty Rear Left Seat Contour -->
+                  <rect x="5.8" y="27.5" width="4.8" height="5.0" rx="1.2" fill="#27272A" stroke="#3F3F46" stroke-width="0.5" opacity="0.35"/>
+                  <rect x="6.4" y="26.5" width="3.6" height="1.2" rx="0.6" fill="#3F3F46" opacity="0.35"/>
                 `}
 
-                <!-- Rear Right Seat (User Passenger) -->
+                <!-- ═══════════════════════════════════════════════════════════ -->
+                <!-- USER RIDER (Rear Right): Normal Human (Head + Shoulders)    -->
+                <!-- ═══════════════════════════════════════════════════════════ -->
                 ${coRidersCount >= 2 ? `
-                  <circle cx="16" cy="29.5" r="2.2" fill="#10B981"/>
-                  <circle cx="16" cy="29.5" r="0.9" fill="#FFFFFF"/>
+                  <!-- User Shoulders (Emerald Green) -->
+                  <path d="M13.2 32.2 Q15.8 31.0 18.4 32.2 L18.4 33.6 Q15.8 32.6 13.2 33.6 Z" fill="#059669" opacity="0.95"/>
+                  <!-- User Head Base & Ears -->
+                  <circle cx="15.8" cy="29.0" r="2.0" fill="#FDDCB1"/>
+                  <circle cx="13.7" cy="29.0" r="0.5" fill="#FDDCB1"/>
+                  <circle cx="17.9" cy="29.0" r="0.5" fill="#FDDCB1"/>
+                  <!-- Normal Human Hair (Natural Dark Haircut, No Cap) -->
+                  <path d="M13.9 29.2 Q13.9 27.0 15.8 27.0 Q17.7 27.0 17.7 29.2 Q15.8 28.3 13.9 29.2 Z" fill="#1E293B"/>
                 ` : `
-                  <rect x="13.5" y="27.5" width="4.5" height="4.5" rx="1.2" fill="#27272A" opacity="0.25"/>
+                  <!-- Empty Rear Right Seat Contour -->
+                  <rect x="13.4" y="27.5" width="4.8" height="5.0" rx="1.2" fill="#27272A" stroke="#3F3F46" stroke-width="0.5" opacity="0.35"/>
+                  <rect x="14.0" y="26.5" width="3.6" height="1.2" rx="0.6" fill="#3F3F46" opacity="0.35"/>
                 `}
 
                 <!-- Rear Windshield -->

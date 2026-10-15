@@ -284,6 +284,8 @@ export default function JourneyScreen({
 
   // Interpolated cab coordinate and heading vector for the Leaflet map
   const currentVehicleCoord = useMemo(() => {
+    const isFemale = driver?.gender === 'female';
+
     if (simPhase === 'approaching') {
       const pt = getInterpolatedPoint(effectiveApproachCoords, simProgress);
       if (!pt) return null;
@@ -296,6 +298,8 @@ export default function JourneyScreen({
         isAtPickup: false,
         isCompleted: false,
         coRidersCount: 1, // Driver + 1 co-rider already onboard
+        isDriverFemale: isFemale,
+        driverGender: driver?.gender || 'male',
         label: `${driver.model} · Arriving in ~${minsLeft}m`
       };
     }
@@ -312,6 +316,8 @@ export default function JourneyScreen({
         isAtPickup: true,
         isCompleted: false,
         coRidersCount: 1, // At pickup, boarding user
+        isDriverFemale: isFemale,
+        driverGender: driver?.gender || 'male',
         label: `${driver.name} at Pickup · Boarding (${boardingCountdown}s)`
       };
     }
@@ -328,6 +334,8 @@ export default function JourneyScreen({
         isAtPickup: false,
         isCompleted: false,
         coRidersCount: 2, // Driver + Co-rider 1 + User
+        isDriverFemale: isFemale,
+        driverGender: driver?.gender || 'male',
         label: `${driver.model} · On Trip (~${minsLeft}m left)`
       };
     }
@@ -341,6 +349,8 @@ export default function JourneyScreen({
       isAtPickup: false,
       isCompleted: true,
       coRidersCount: 2,
+      isDriverFemale: isFemale,
+      driverGender: driver?.gender || 'male',
       label: 'Destination Reached · ₹Saved!'
     };
   }, [simPhase, simProgress, effectiveApproachCoords, effectiveRouteCoords, origin, dest, boardingCountdown, directTimeMin, driver]);
