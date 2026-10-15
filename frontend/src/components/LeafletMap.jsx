@@ -480,6 +480,206 @@ export default function LeafletMap({
       : (vehicleCoord.isApproaching ? 1 : 2);
 
     const isDriverFemale = Boolean(vehicleCoord.isDriverFemale || vehicleCoord.driverGender === 'female');
+    const vehicleType = vehicleCoord.vehicleType || 'ev'; // 'auto' | 'sedan' | 'small_car' | 'ev'
+
+    // Render vehicle SVG based on type (Auto Rickshaw, Sedan, Small Car, EV)
+    const isAuto = vehicleType === 'auto';
+    const isSedan = vehicleType === 'sedan';
+    const isSmallCar = vehicleType === 'small_car';
+    const isEv = vehicleType === 'ev' || (!isAuto && !isSedan && !isSmallCar);
+
+    const skinTone = '#FDDCB1';
+    const hairBrown = '#3F2E23';
+    const hairDark = '#1E293B';
+    const uniformColor = isEv ? '#0F766E' : isSedan ? '#1E3A8A' : '#334155';
+
+    const vehicleSvg = isAuto ? `
+      <svg width="22" height="44" viewBox="0 0 24 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Front Wheel (Single 3-Wheeler Wheel at nose) -->
+        <rect x="11.1" y="2" width="1.8" height="5" rx="0.9" fill="#18181B"/>
+        <rect x="10.4" y="3.5" width="3.2" height="1.2" rx="0.6" fill="#64748B"/>
+        
+        <!-- Rear Wheels -->
+        <rect x="0.5" y="28" width="1.8" height="6.5" rx="0.8" fill="#18181B"/>
+        <rect x="21.7" y="28" width="1.8" height="6.5" rx="0.8" fill="#18181B"/>
+
+        <!-- Auto Rickshaw Iconic Chassis (Tapered front, open sides, yellow & green body) -->
+        <path d="M7 11 L10.5 4.5 Q12 3 13.5 4.5 L17 11 L21 14 L21 38 Q21 41 18 42 L6 42 Q3 41 3 38 L3 14 Z" fill="#F5C451" stroke="#FFFFFF" stroke-width="1.2"/>
+        
+        <!-- Classic Green Lower Apron / Mudguards in India -->
+        <path d="M3 33 L21 33 L21 40 Q21 42 18 42 L6 42 Q3 42 3 40 Z" fill="#15803D"/>
+
+        <!-- Single Front Headlight -->
+        <circle cx="12" cy="4.2" r="1.3" fill="#FFFFFF"/>
+        <circle cx="12" cy="4.2" r="0.6" fill="#FEF08A"/>
+
+        <!-- Open Cab Interior Floor (Deep Charcoal) -->
+        <path d="M5.5 12 L18.5 12 L19.5 37 L4.5 37 Z" fill="#18181B"/>
+
+        <!-- Open Side Safety Rails (Black Cutouts) -->
+        <rect x="2.5" y="15" width="2" height="14" rx="0.5" fill="#18181B"/>
+        <rect x="19.5" y="15" width="2" height="14" rx="0.5" fill="#18181B"/>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- AUTO DRIVER (Center Front): Khaki Uniform & Handlebar       -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- Handlebar Steering Controls -->
+        <path d="M8.8 14.5 L15.2 14.5" stroke="#CBD5E1" stroke-width="1.2" stroke-linecap="round"/>
+        <rect x="8.0" y="13.9" width="1.6" height="1.2" rx="0.4" fill="#09090B"/>
+        <rect x="14.4" y="13.9" width="1.6" height="1.2" rx="0.4" fill="#09090B"/>
+
+        <!-- Driver Hands on Handlebar -->
+        <circle cx="8.8" cy="14.5" r="0.65" fill="${skinTone}"/>
+        <circle cx="15.2" cy="14.5" r="0.65" fill="${skinTone}"/>
+
+        <!-- Driver Khaki Uniform Shoulders -->
+        <path d="M9.4 20.8 Q12 19.6 14.6 20.8 L14.6 22.4 Q12 21.4 9.4 22.4 Z" fill="#926328"/>
+        <path d="M11 19.8 L12 21.0 L13 19.8" stroke="#B8860B" stroke-width="0.5" fill="none"/>
+
+        <!-- Driver Head & Khaki Cap -->
+        <circle cx="12.0" cy="17.8" r="2.0" fill="${skinTone}"/>
+        <circle cx="9.9" cy="17.8" r="0.5" fill="${skinTone}"/>
+        <circle cx="14.1" cy="17.8" r="0.5" fill="${skinTone}"/>
+        ${isDriverFemale ? `
+          <path d="M10.8 19.4 Q12 20.8 13.2 19.4" fill="${hairBrown}" stroke="${hairBrown}" stroke-width="0.5"/>
+        ` : ''}
+        <!-- Khaki Cap with Forward Peak -->
+        <ellipse cx="12.0" cy="17.8" rx="2.0" ry="1.6" fill="#704810"/>
+        <path d="M10.4 16.8 Q12.0 15.5 13.6 16.8 Z" fill="#452C06"/>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- REAR PASSENGER BENCH (3 Riders Max in Auto Rickshaw)        -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <rect x="4.8" y="27.5" width="14.4" height="6.5" rx="1.5" fill="#27272A" stroke="#3F3F46" stroke-width="0.5" opacity="0.45"/>
+
+        <!-- Rider 1 (Rear Left: Amber Co-Rider) -->
+        ${coRidersCount >= 1 ? `
+          <path d="M5.4 32.2 Q7.5 31.0 9.6 32.2 L9.6 33.6 Q7.5 32.8 5.4 33.6 Z" fill="#D97706"/>
+          <circle cx="7.5" cy="29.2" r="1.8" fill="${skinTone}"/>
+          <path d="M5.9 29.4 Q5.9 27.4 7.5 27.4 Q9.1 27.4 9.1 29.4 Q7.5 28.6 5.9 29.4 Z" fill="${hairBrown}"/>
+        ` : ''}
+
+        <!-- Rider 2 (Rear Right: Emerald User) -->
+        ${coRidersCount >= 2 ? `
+          <path d="M14.4 32.2 Q16.5 31.0 18.6 32.2 L18.6 33.6 Q16.5 32.8 14.4 33.6 Z" fill="#059669"/>
+          <circle cx="16.5" cy="29.2" r="1.8" fill="${skinTone}"/>
+          <path d="M14.9 29.4 Q14.9 27.4 16.5 27.4 Q18.1 27.4 18.1 29.4 Q16.5 28.6 14.9 29.4 Z" fill="${hairDark}"/>
+        ` : ''}
+
+        <!-- Rider 3 (Rear Center: Blue Co-Rider - 3 Riders Max) -->
+        ${coRidersCount >= 3 ? `
+          <path d="M10.0 32.2 Q12.0 31.0 14.0 32.2 L14.0 33.6 Q12.0 32.8 10.0 33.6 Z" fill="#2563EB"/>
+          <circle cx="12.0" cy="29.2" r="1.8" fill="${skinTone}"/>
+          <path d="M10.4 29.4 Q10.4 27.4 12.0 27.4 Q13.6 27.4 13.6 29.4 Q12.0 28.6 10.4 29.4 Z" fill="#374151"/>
+        ` : ''}
+
+        <!-- Rear Taillights -->
+        <rect x="4.5" y="41" width="3" height="1.2" rx="0.5" fill="#EF4444"/>
+        <rect x="16.5" y="41" width="3" height="1.2" rx="0.5" fill="#EF4444"/>
+      </svg>
+    ` : `
+      <svg width="22" height="44" viewBox="0 0 24 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Front Wheels -->
+        <rect x="0.5" y="8" width="1.8" height="6" rx="0.8" fill="#18181B"/>
+        <rect x="21.7" y="8" width="1.8" height="6" rx="0.8" fill="#18181B"/>
+        <!-- Rear Wheels -->
+        <rect x="0.5" y="32" width="1.8" height="6" rx="0.8" fill="#18181B"/>
+        <rect x="21.7" y="32" width="1.8" height="6" rx="0.8" fill="#18181B"/>
+
+        <!-- Chassis Outline customized by vehicle type -->
+        ${isSedan ? `
+          <!-- Executive Sedan Chassis (Elongated trunk & chrome accents) -->
+          <path d="M5 2 C8 0.5 16 0.5 19 2 C21 4 22 8 22 13 L23 16 C23.8 17 23.8 19 22.5 20 L22 21 L22 42 C22 46.5 20 47.5 18 47.5 L6 47.5 C4 47.5 2 46.5 2 42 L2 21 L1.5 20 C0.2 19 0.2 17 1 16 L2 13 C2 8 3 4 5 2 Z" fill="#F5C451" stroke="#FFFFFF" stroke-width="1.2"/>
+          <line x1="4.5" y1="41" x2="19.5" y2="41" stroke="#D97706" stroke-width="0.8"/>
+        ` : isSmallCar ? `
+          <!-- City Hatchback Chassis (Compact rounded body & short rear) -->
+          <path d="M5 4 C8 2 16 2 19 4 C21 6 22 10 22 14 L22.8 17 C23.5 18 23.5 19.5 22.5 20.5 L22 21.5 L22 39 C22 43 20 45 18 45 L6 45 C4 45 2 43 2 39 L2 21.5 L1.5 20.5 C0.5 19.5 0.5 18 1.2 17 L2 14 C2 10 3 6 5 4 Z" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.2"/>
+        ` : `
+          <!-- EV Chassis (Aerodynamic dark body with electric cyan glow) -->
+          <path d="M5 3 C8 1 16 1 19 3 C21 5 22 10 22 14 L23 17 C23.8 18 23.8 20 22.5 21 L22 22 L22 41 C22 45 20 47 18 47 L6 47 C4 47 2 45 2 41 L2 22 L1.5 21 C0.2 20 0.2 18 1 17 L2 14 C2 10 3 5 5 3 Z" fill="#0F172A" stroke="#06B6D4" stroke-width="1.2"/>
+          <rect x="9" y="46.5" width="6" height="1.2" rx="0.4" fill="#10B981"/>
+        `}
+
+        <!-- Front Headlights (White Forward Beams) -->
+        <circle cx="5" cy="3.5" r="1.1" fill="#FFFFFF"/>
+        <circle cx="19" cy="3.5" r="1.1" fill="#FFFFFF"/>
+        
+        <!-- Front Windshield -->
+        <path d="M4.5 11 Q12 9 19.5 11 L18 15 Q12 13.5 6 15 Z" fill="#18181B"/>
+
+        <!-- Panoramic Cabin Glass Interior (Deep Charcoal Floor) -->
+        <rect x="4.5" y="15" width="15" height="21" rx="3" fill="#18181B" stroke="#27272A" stroke-width="0.7"/>
+
+        <!-- Empty Front-Right Passenger Seat Contour -->
+        <rect x="13.4" y="17.0" width="4.8" height="5.0" rx="1.2" fill="#27272A" stroke="#3F3F46" stroke-width="0.5" opacity="0.35"/>
+        <rect x="14.0" y="16.0" width="3.6" height="1.2" rx="0.6" fill="#3F3F46" opacity="0.35"/>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- DRIVER (Front-LEFT Steering Side with Uniform & Hands)      -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- Steering Wheel in front of Driver -->
+        <circle cx="8.2" cy="16.5" r="2.0" stroke="#FFFFFF" stroke-width="0.9" fill="none"/>
+        <line x1="8.2" y1="16.5" x2="8.2" y2="18.5" stroke="#CBD5E1" stroke-width="0.7"/>
+        <line x1="6.2" y1="16.5" x2="10.2" y2="16.5" stroke="#CBD5E1" stroke-width="0.7"/>
+        <circle cx="8.2" cy="16.5" r="0.6" fill="#64748B"/>
+
+        <!-- Driver Hands on Steering Wheel (10 and 2 o'clock) -->
+        <circle cx="6.7" cy="15.8" r="0.65" fill="${skinTone}"/>
+        <circle cx="9.7" cy="15.8" r="0.65" fill="${skinTone}"/>
+
+        <!-- Driver Uniform Shoulders -->
+        <path d="M5.4 22.2 Q8.2 21.0 11.0 22.2 L11.0 23.8 Q8.2 22.8 5.4 23.8 Z" fill="${uniformColor}"/>
+        <path d="M7.4 21.4 L8.2 22.6 L9.0 21.4" stroke="#FFFFFF" stroke-width="0.6" fill="none"/>
+
+        <!-- Driver Head Base & Ears -->
+        <circle cx="8.2" cy="19.2" r="2.1" fill="${skinTone}"/>
+        <circle cx="6.0" cy="19.2" r="0.55" fill="${skinTone}"/>
+        <circle cx="10.4" cy="19.2" r="0.55" fill="${skinTone}"/>
+
+        ${isDriverFemale ? `
+          <path d="M6.8 21.0 Q8.2 22.6 9.6 21.0" fill="${hairBrown}" stroke="${hairBrown}" stroke-width="0.6"/>
+        ` : ''}
+
+        <!-- Peaked Pilot / Chauffeur Cap with Visor -->
+        <ellipse cx="8.2" cy="19.2" rx="2.1" ry="1.7" fill="#0F172A"/>
+        <path d="M6.3 18.4 Q8.2 17.5 10.1 18.4" stroke="#F5C451" stroke-width="0.55" fill="none"/>
+        <path d="M6.6 18.0 Q8.2 16.4 9.8 18.0 Z" fill="#020617" stroke="#0F172A" stroke-width="0.4"/>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- REAR SEATS: RIDERS ON THE BACK SEAT                         -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- Rear Left Seat (Co-Rider 1: Warm Amber) -->
+        ${coRidersCount >= 1 ? `
+          <path d="M5.9 32.2 Q8.5 31.0 11.1 32.2 L11.1 33.6 Q8.5 32.6 5.9 33.6 Z" fill="#D97706" opacity="0.95"/>
+          <circle cx="8.5" cy="29.0" r="2.0" fill="${skinTone}"/>
+          <circle cx="6.4" cy="29.0" r="0.5" fill="${skinTone}"/>
+          <circle cx="10.6" cy="29.0" r="0.5" fill="${skinTone}"/>
+          <path d="M6.6 29.2 Q6.6 27.0 8.5 27.0 Q10.4 27.0 10.4 29.2 Q8.5 28.3 6.6 29.2 Z" fill="${hairBrown}"/>
+        ` : `
+          <rect x="5.8" y="27.5" width="4.8" height="5.0" rx="1.2" fill="#27272A" stroke="#3F3F46" stroke-width="0.5" opacity="0.35"/>
+          <rect x="6.4" y="26.5" width="3.6" height="1.2" rx="0.6" fill="#3F3F46" opacity="0.35"/>
+        `}
+
+        <!-- Rear Right Seat (User Rider: Emerald Green) -->
+        ${coRidersCount >= 2 ? `
+          <path d="M13.2 32.2 Q15.8 31.0 18.4 32.2 L18.4 33.6 Q15.8 32.6 13.2 33.6 Z" fill="#059669" opacity="0.95"/>
+          <circle cx="15.8" cy="29.0" r="2.0" fill="${skinTone}"/>
+          <circle cx="13.7" cy="29.0" r="0.5" fill="${skinTone}"/>
+          <circle cx="17.9" cy="29.0" r="0.5" fill="${skinTone}"/>
+          <path d="M13.9 29.2 Q13.9 27.0 15.8 27.0 Q17.7 27.0 17.7 29.2 Q15.8 28.3 13.9 29.2 Z" fill="${hairDark}"/>
+        ` : `
+          <rect x="13.4" y="27.5" width="4.8" height="5.0" rx="1.2" fill="#27272A" stroke="#3F3F46" stroke-width="0.5" opacity="0.35"/>
+          <rect x="14.0" y="26.5" width="3.6" height="1.2" rx="0.6" fill="#3F3F46" opacity="0.35"/>
+        `}
+
+        <!-- Rear Windshield -->
+        <path d="M5.5 37 Q12 39 18.5 37 L19 41 Q12 43 5 41 Z" fill="#18181B"/>
+
+        <!-- Rear Taillights (Red LED Strips) -->
+        <rect x="4.5" y="45.5" width="3" height="1.2" rx="0.5" fill="#EF4444"/>
+        <rect x="16.5" y="45.5" width="3" height="1.2" rx="0.5" fill="#EF4444"/>
+      </svg>
+    `;
 
     const vehicleIcon = L.divIcon({
       className: 'custom-vehicle-moving-node',
@@ -501,7 +701,7 @@ export default function LeafletMap({
             <span>${label}</span>
           </div>
 
-          <!-- Pure Car Cutout Container -->
+          <!-- Pure Vehicle Cutout Container (Sleek Compact Size) -->
           <div style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
             ${isAtPickup ? `
               <!-- Green Arrival Ripple Wave (Zomato/Blinkit arrival alert) -->
@@ -509,102 +709,9 @@ export default function LeafletMap({
               <div style="position: absolute; width: 30px; height: 30px; border-radius: 50%; background: rgba(16,185,129,0.25); animation: cabGlowPulse 1.4s infinite;"></div>
             ` : ''}
 
-            <!-- Compact Pure Car Cutout Rotated to Road Bearing -->
+            <!-- Compact Pure Vehicle Cutout Rotated to Road Bearing -->
             <div style="transform: rotate(${bearing}deg); transition: transform 0.1s linear; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));">
-              <svg width="22" height="44" viewBox="0 0 24 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Front Wheels -->
-                <rect x="0.5" y="8" width="1.8" height="6" rx="0.8" fill="#18181B"/>
-                <rect x="21.7" y="8" width="1.8" height="6" rx="0.8" fill="#18181B"/>
-                <!-- Rear Wheels -->
-                <rect x="0.5" y="32" width="1.8" height="6" rx="0.8" fill="#18181B"/>
-                <rect x="21.7" y="32" width="1.8" height="6" rx="0.8" fill="#18181B"/>
-
-                <!-- Aerodynamic Car Chassis Cutout Body -->
-                <path d="M5 3 C8 1 16 1 19 3 C21 5 22 10 22 14 L23 17 C23.8 18 23.8 20 22.5 21 L22 22 L22 41 C22 45 20 47 18 47 L6 47 C4 47 2 45 2 41 L2 22 L1.5 21 C0.2 20 0.2 18 1 17 L2 14 C2 10 3 5 5 3 Z" fill="#F5C451" stroke="#FFFFFF" stroke-width="1.2"/>
-
-                <!-- Front Headlights (White Forward Beams) -->
-                <circle cx="5" cy="3.5" r="1.1" fill="#FFFFFF"/>
-                <circle cx="19" cy="3.5" r="1.1" fill="#FFFFFF"/>
-                
-                <!-- Front Windshield (Dark Curved Glass) -->
-                <path d="M4.5 11 Q12 9 19.5 11 L18 15 Q12 13.5 6 15 Z" fill="#18181B"/>
-
-                <!-- Panoramic Cabin Glass Interior (Deep Charcoal Floor) -->
-                <rect x="4.5" y="15" width="15" height="21" rx="3" fill="#18181B" stroke="#27272A" stroke-width="0.7"/>
-
-                <!-- Front Left Passenger Seat (Empty Contour) -->
-                <rect x="5.8" y="17.0" width="4.8" height="5.0" rx="1.2" fill="#27272A" stroke="#3F3F46" stroke-width="0.5" opacity="0.4"/>
-                <rect x="6.4" y="16.0" width="3.6" height="1.2" rx="0.6" fill="#3F3F46" opacity="0.4"/>
-
-                <!-- ═══════════════════════════════════════════════════════════ -->
-                <!-- DRIVER (Front Right - India RHD): Human with Driver Cap    -->
-                <!-- ═══════════════════════════════════════════════════════════ -->
-                <!-- Steering Wheel in front of Driver -->
-                <path d="M14.2 16.2 A1.8 1.4 0 0 1 17.4 16.2" stroke="#CBD5E1" stroke-width="0.8" fill="none" stroke-linecap="round"/>
-                
-                <!-- Driver Uniform Shoulders -->
-                <path d="M13.2 22.2 Q15.8 21.0 18.4 22.2 L18.4 23.6 Q15.8 22.6 13.2 23.6 Z" fill="#334155"/>
-                
-                <!-- Driver Head Base & Ears -->
-                <circle cx="15.8" cy="19.2" r="2.1" fill="#FDDCB1"/>
-                <circle cx="13.6" cy="19.2" r="0.55" fill="#FDDCB1"/>
-                <circle cx="18.0" cy="19.2" r="0.55" fill="#FDDCB1"/>
-                
-                ${isDriverFemale ? `
-                  <!-- Female Driver Hair Strands / Low Bun at back -->
-                  <path d="M14.2 21.0 Q15.8 22.6 17.4 21.0" fill="#3F2E23" stroke="#3F2E23" stroke-width="0.6"/>
-                ` : ''}
-
-                <!-- Driver Cap (Peaked Chauffeur / Pilot Cap) -->
-                <ellipse cx="15.8" cy="19.2" rx="2.1" ry="1.7" fill="#0F172A"/>
-                <!-- Gold Driver Cap Emblem Band -->
-                <path d="M13.9 18.4 Q15.8 17.5 17.7 18.4" stroke="#F5C451" stroke-width="0.55" fill="none"/>
-                <!-- Cap Visor / Peak extending forward toward windshield -->
-                <path d="M14.2 18.0 Q15.8 16.4 17.4 18.0 Z" fill="#020617" stroke="#0F172A" stroke-width="0.4"/>
-
-                <!-- ═══════════════════════════════════════════════════════════ -->
-                <!-- CO-RIDER 1 (Rear Left): Normal Human (Head + Shoulders)     -->
-                <!-- ═══════════════════════════════════════════════════════════ -->
-                ${coRidersCount >= 1 ? `
-                  <!-- Passenger Shoulders (Warm Amber) -->
-                  <path d="M5.9 32.2 Q8.5 31.0 11.1 32.2 L11.1 33.6 Q8.5 32.6 5.9 33.6 Z" fill="#D97706" opacity="0.95"/>
-                  <!-- Passenger Head Base & Ears -->
-                  <circle cx="8.5" cy="29.0" r="2.0" fill="#FDDCB1"/>
-                  <circle cx="6.4" cy="29.0" r="0.5" fill="#FDDCB1"/>
-                  <circle cx="10.6" cy="29.0" r="0.5" fill="#FDDCB1"/>
-                  <!-- Normal Human Hair (Natural Haircut, No Cap) -->
-                  <path d="M6.6 29.2 Q6.6 27.0 8.5 27.0 Q10.4 27.0 10.4 29.2 Q8.5 28.3 6.6 29.2 Z" fill="#3F2E23"/>
-                ` : `
-                  <!-- Empty Rear Left Seat Contour -->
-                  <rect x="5.8" y="27.5" width="4.8" height="5.0" rx="1.2" fill="#27272A" stroke="#3F3F46" stroke-width="0.5" opacity="0.35"/>
-                  <rect x="6.4" y="26.5" width="3.6" height="1.2" rx="0.6" fill="#3F3F46" opacity="0.35"/>
-                `}
-
-                <!-- ═══════════════════════════════════════════════════════════ -->
-                <!-- USER RIDER (Rear Right): Normal Human (Head + Shoulders)    -->
-                <!-- ═══════════════════════════════════════════════════════════ -->
-                ${coRidersCount >= 2 ? `
-                  <!-- User Shoulders (Emerald Green) -->
-                  <path d="M13.2 32.2 Q15.8 31.0 18.4 32.2 L18.4 33.6 Q15.8 32.6 13.2 33.6 Z" fill="#059669" opacity="0.95"/>
-                  <!-- User Head Base & Ears -->
-                  <circle cx="15.8" cy="29.0" r="2.0" fill="#FDDCB1"/>
-                  <circle cx="13.7" cy="29.0" r="0.5" fill="#FDDCB1"/>
-                  <circle cx="17.9" cy="29.0" r="0.5" fill="#FDDCB1"/>
-                  <!-- Normal Human Hair (Natural Dark Haircut, No Cap) -->
-                  <path d="M13.9 29.2 Q13.9 27.0 15.8 27.0 Q17.7 27.0 17.7 29.2 Q15.8 28.3 13.9 29.2 Z" fill="#1E293B"/>
-                ` : `
-                  <!-- Empty Rear Right Seat Contour -->
-                  <rect x="13.4" y="27.5" width="4.8" height="5.0" rx="1.2" fill="#27272A" stroke="#3F3F46" stroke-width="0.5" opacity="0.35"/>
-                  <rect x="14.0" y="26.5" width="3.6" height="1.2" rx="0.6" fill="#3F3F46" opacity="0.35"/>
-                `}
-
-                <!-- Rear Windshield -->
-                <path d="M5.5 37 Q12 39 18.5 37 L19 41 Q12 43 5 41 Z" fill="#18181B"/>
-
-                <!-- Rear Taillights (Red LED Strips) -->
-                <rect x="4.5" y="45.5" width="3" height="1.2" rx="0.5" fill="#EF4444"/>
-                <rect x="16.5" y="45.5" width="3" height="1.2" rx="0.5" fill="#EF4444"/>
-              </svg>
+              ${vehicleSvg}
             </div>
           </div>
         </div>

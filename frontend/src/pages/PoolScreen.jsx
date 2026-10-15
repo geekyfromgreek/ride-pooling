@@ -515,6 +515,7 @@ export default function PoolScreen({
 
   const currentVehicleCoord = useMemo(() => {
     const isFemale = assignedDriver?.gender === 'female';
+    const vehicleType = assignedDriver?.vehicleType || 'ev';
 
     if (simPhase === 'approaching') {
       const poly = approachRouteCoords.length > 1 ? approachRouteCoords : [
@@ -530,6 +531,7 @@ export default function PoolScreen({
         isApproaching: true,
         isAtPickup: false,
         isCompleted: false,
+        vehicleType,
         coRidersCount: 1, // Driver + Co-rider 1 already onboard
         isDriverFemale: isFemale,
         driverGender: assignedDriver?.gender || 'male',
@@ -548,6 +550,7 @@ export default function PoolScreen({
         isApproaching: false,
         isAtPickup: true,
         isCompleted: false,
+        vehicleType,
         coRidersCount: 1, // At pickup, boarding user
         isDriverFemale: isFemale,
         driverGender: assignedDriver?.gender || 'male',
@@ -569,6 +572,7 @@ export default function PoolScreen({
         isApproaching: false,
         isAtPickup: false,
         isCompleted: false,
+        vehicleType,
         coRidersCount: 2, // Driver + Co-rider 1 + User
         isDriverFemale: isFemale,
         driverGender: assignedDriver?.gender || 'male',
@@ -587,6 +591,7 @@ export default function PoolScreen({
       isApproaching: false,
       isAtPickup: false,
       isCompleted: true,
+      vehicleType,
       coRidersCount: 2,
       isDriverFemale: isFemale,
       driverGender: assignedDriver?.gender || 'male',

@@ -623,105 +623,180 @@ export const FLEET_VEHICLES = [
 ];
 
 export const DRIVER_POOL = [
+  // ─── 1. AUTO RICKSHAWS (3 Riders Max, Center Driver with Khaki Uniform) ───
   {
-    name: 'Ramesh Patil',
-    initials: 'RP',
-    model: 'Tata Tigor EV',
-    plate: 'MH 15 AB 4821',
-    rating: '4.90',
-    trips: '2,140',
-    gender: 'male',
-    verifiedBadge: 'Verified Pilot'
-  },
-  {
-    name: 'Pooja Deshmukh',
-    initials: 'PD',
-    model: 'MG ZS EV',
-    plate: 'MH 15 BK 7714',
-    rating: '4.95',
-    trips: '3,210',
-    gender: 'female',
-    verifiedBadge: 'Women-Verified Pilot'
-  },
-  {
-    name: 'Sunil Shinde',
-    initials: 'SS',
-    model: 'Tata Tiago EV',
-    plate: 'MH 15 DX 3312',
+    name: 'Ganesh Borde',
+    initials: 'GB',
+    model: 'Bajaj RE Auto',
+    vehicleType: 'auto',
+    maxSeats: 3,
+    plate: 'MH 15 TA 3140',
     rating: '4.88',
-    trips: '1,890',
+    trips: '4,120',
     gender: 'male',
-    verifiedBadge: 'Verified Pilot'
+    verifiedBadge: 'Verified Auto Pilot'
   },
   {
-    name: 'Anjali Patil',
-    initials: 'AP',
-    model: 'Mahindra XUV400',
-    plate: 'MH 15 CZ 5560',
-    rating: '4.94',
-    trips: '2,750',
+    name: 'Sunita Jadhav',
+    initials: 'SJ',
+    model: 'Piaggio Ape E-City Auto',
+    vehicleType: 'auto',
+    maxSeats: 3,
+    plate: 'MH 15 TB 8820',
+    rating: '4.95',
+    trips: '2,890',
     gender: 'female',
-    verifiedBadge: 'Women-Verified Pilot'
+    verifiedBadge: 'Women-Verified Auto Pilot'
   },
   {
-    name: 'Vikram Kulkarni',
-    initials: 'VK',
-    model: 'Hyundai Kona EV',
-    plate: 'MH 15 EG 9021',
+    name: 'Dnyaneshwar Shinde',
+    initials: 'DS',
+    model: 'Mahindra Treo EV Auto',
+    vehicleType: 'auto',
+    maxSeats: 3,
+    plate: 'MH 15 TC 1904',
+    rating: '4.91',
+    trips: '3,450',
+    gender: 'male',
+    verifiedBadge: 'EV Auto Pilot'
+  },
+  {
+    name: 'Santosh Kadam',
+    initials: 'SK',
+    model: 'Bajaj Compact Auto',
+    vehicleType: 'auto',
+    maxSeats: 3,
+    plate: 'MH 15 TD 6215',
     rating: '4.86',
-    trips: '1,420',
+    trips: '2,310',
     gender: 'male',
-    verifiedBadge: 'Verified Pilot'
+    verifiedBadge: 'Verified Auto Pilot'
+  },
+
+  // ─── 2. EXECUTIVE SEDANS (Formal Chauffeur Uniform) ───
+  {
+    name: 'Rajesh Gaikwad',
+    initials: 'RG',
+    model: 'Maruti Suzuki Dzire Sedan',
+    vehicleType: 'sedan',
+    maxSeats: 4,
+    plate: 'MH 15 CZ 9912',
+    rating: '4.92',
+    trips: '2,640',
+    gender: 'male',
+    verifiedBadge: 'Executive Chauffeur'
   },
   {
-    name: 'Sunita Shinde',
-    initials: 'SS',
-    model: 'Tata Tigor EV',
-    plate: 'MH 15 GH 4452',
-    rating: '4.97',
-    trips: '2,430',
+    name: 'Priya Sharma',
+    initials: 'PS',
+    model: 'Hyundai Aura Sedan',
+    vehicleType: 'sedan',
+    maxSeats: 4,
+    plate: 'MH 15 DF 4310',
+    rating: '4.96',
+    trips: '3,100',
     gender: 'female',
-    verifiedBadge: 'Women-Verified Pilot'
+    verifiedBadge: 'Women-Verified Chauffeur'
   },
   {
     name: 'Sachin Bhalerao',
     initials: 'SB',
-    model: 'Tata Nexon EV',
-    plate: 'MH 15 FA 1198',
-    rating: '4.91',
-    trips: '980',
+    model: 'Honda Amaze Sedan',
+    vehicleType: 'sedan',
+    maxSeats: 4,
+    plate: 'MH 15 EG 7780',
+    rating: '4.90',
+    trips: '1,980',
     gender: 'male',
-    verifiedBadge: 'Verified Pilot'
+    verifiedBadge: 'Executive Chauffeur'
+  },
+
+  // ─── 3. SMALL CARS / HATCHBACKS (City Fleet) ───
+  {
+    name: 'Ramesh Patil',
+    initials: 'RP',
+    model: 'Maruti WagonR',
+    vehicleType: 'small_car',
+    maxSeats: 4,
+    plate: 'MH 15 AB 4821',
+    rating: '4.89',
+    trips: '2,140',
+    gender: 'male',
+    verifiedBadge: 'City Cab Pilot'
   },
   {
-    name: 'Deepak Pawar',
-    initials: 'DP',
-    model: 'BYD Atto 3',
-    plate: 'MH 15 JK 6701',
-    rating: '4.89',
-    trips: '1,650',
+    name: 'Vinay Joshi',
+    initials: 'VJ',
+    model: 'Tata Tiago Hatchback',
+    vehicleType: 'small_car',
+    maxSeats: 4,
+    plate: 'MH 15 PQ 2045',
+    rating: '4.87',
+    trips: '1,120',
     gender: 'male',
-    verifiedBadge: 'Verified Pilot'
+    verifiedBadge: 'City Cab Pilot'
   },
   {
     name: 'Kavita Jadhav',
     initials: 'KJ',
-    model: 'Tata Nexon EV',
+    model: 'Maruti Swift ZXi',
+    vehicleType: 'small_car',
+    maxSeats: 4,
     plate: 'MH 15 LM 8832',
     rating: '4.93',
     trips: '2,190',
     gender: 'female',
     verifiedBadge: 'Women-Verified Pilot'
   },
+
+  // ─── 4. ELECTRIC VEHICLES (EV Fleet) ───
   {
-    name: 'Vinay Joshi',
-    initials: 'VJ',
-    model: 'Tata Tiago EV',
-    plate: 'MH 15 PQ 2045',
-    rating: '4.87',
-    trips: '1,120',
+    name: 'Pooja Deshmukh',
+    initials: 'PD',
+    model: 'Tata Nexon EV Max',
+    vehicleType: 'ev',
+    maxSeats: 4,
+    plate: 'MH 15 BK 7714',
+    rating: '4.95',
+    trips: '3,210',
+    gender: 'female',
+    verifiedBadge: 'Women-Verified EV Pilot'
+  },
+  {
+    name: 'Vikram Kulkarni',
+    initials: 'VK',
+    model: 'Tata Tigor EV',
+    vehicleType: 'ev',
+    maxSeats: 4,
+    plate: 'MH 15 EV 9021',
+    rating: '4.91',
+    trips: '1,720',
     gender: 'male',
-    verifiedBadge: 'Verified Pilot'
+    verifiedBadge: 'EV Green Pilot'
+  },
+  {
+    name: 'Deepak Pawar',
+    initials: 'DP',
+    model: 'BYD Atto 3 EV',
+    vehicleType: 'ev',
+    maxSeats: 4,
+    plate: 'MH 15 JK 6701',
+    rating: '4.89',
+    trips: '1,650',
+    gender: 'male',
+    verifiedBadge: 'EV Fleet Pilot'
+  },
+  {
+    name: 'Anjali Patil',
+    initials: 'AP',
+    model: 'Mahindra XUV400 EV',
+    vehicleType: 'ev',
+    maxSeats: 4,
+    plate: 'MH 15 EV 5560',
+    rating: '4.94',
+    trips: '2,750',
+    gender: 'female',
+    verifiedBadge: 'Women-Verified EV Pilot'
   }
 ];
 

@@ -285,6 +285,7 @@ export default function JourneyScreen({
   // Interpolated cab coordinate and heading vector for the Leaflet map
   const currentVehicleCoord = useMemo(() => {
     const isFemale = driver?.gender === 'female';
+    const vehicleType = driver?.vehicleType || 'ev';
 
     if (simPhase === 'approaching') {
       const pt = getInterpolatedPoint(effectiveApproachCoords, simProgress);
@@ -297,6 +298,7 @@ export default function JourneyScreen({
         isApproaching: true,
         isAtPickup: false,
         isCompleted: false,
+        vehicleType,
         coRidersCount: 1, // Driver + 1 co-rider already onboard
         isDriverFemale: isFemale,
         driverGender: driver?.gender || 'male',
@@ -315,6 +317,7 @@ export default function JourneyScreen({
         isApproaching: false,
         isAtPickup: true,
         isCompleted: false,
+        vehicleType,
         coRidersCount: 1, // At pickup, boarding user
         isDriverFemale: isFemale,
         driverGender: driver?.gender || 'male',
@@ -333,7 +336,8 @@ export default function JourneyScreen({
         isApproaching: false,
         isAtPickup: false,
         isCompleted: false,
-        coRidersCount: 2, // Driver + Co-rider 1 + User
+        vehicleType,
+        coRidersCount: vehicleType === 'auto' ? 2 : 2, // In transit, co-rider + user onboard
         isDriverFemale: isFemale,
         driverGender: driver?.gender || 'male',
         label: `${driver.model} · On Trip (~${minsLeft}m left)`
@@ -348,6 +352,7 @@ export default function JourneyScreen({
       isApproaching: false,
       isAtPickup: false,
       isCompleted: true,
+      vehicleType,
       coRidersCount: 2,
       isDriverFemale: isFemale,
       driverGender: driver?.gender || 'male',
