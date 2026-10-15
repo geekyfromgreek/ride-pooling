@@ -7,9 +7,9 @@
 **One neutral engine. Any app. Every city.**
 
 [![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-pool--iq--live.vercel.app-brightgreen?style=for-the-badge)](https://pool-iq-live.vercel.app/)
-[![Tests](https://img.shields.io/badge/pytest-117%20passed-success?style=for-the-badge&logo=pytest)](https://github.com/amodamrutkar/Ride-Pooling)
+[![Tests](https://img.shields.io/badge/pytest-117%20passed-success?style=for-the-badge&logo=pytest)](https://github.com/geekyfromgreek/ride-pooling)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
-[![Open Source](https://img.shields.io/badge/Open%20Source-%E2%9D%A4-red?style=for-the-badge)](https://github.com/amodamrutkar/Ride-Pooling)
+[![Open Source](https://img.shields.io/badge/Open%20Source-%E2%9D%A4-red?style=for-the-badge)](https://github.com/geekyfromgreek/ride-pooling)
 
 > *"Cabs keep running with one passenger. Every city has the same rush hour. PoolIQ turns shared routes into shared savings — for the rider's wallet, the operator's fuel bill, and the city's roads."*
 
@@ -393,6 +393,6 @@ MIT — open source, open data, open city.
 **🌆 Every city has the same rush hour.**
 **PoolIQ turns shared routes into shared savings.**
 
-[🌐 Live Demo](https://pool-iq-live.vercel.app/) · [💻 Code](https://github.com/amodamrutkar/Ride-Pooling) · [📖 API Docs](https://pool-iq-live.vercel.app/docs)
+[🌐 Live Demo](https://pool-iq-live.vercel.app/) · [💻 Code](https://github.com/geekyfromgreek/ride-pooling) · [📖 API Docs](https://pool-iq-live.vercel.app/docs)
 
 </div>
