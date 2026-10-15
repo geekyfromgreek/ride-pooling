@@ -493,94 +493,80 @@ export default function LeafletMap({
           }
         </style>
         <div style="position: relative; display: flex; flex-direction: column; align-items: center; pointer-events: none;">
-          <!-- Floating Status Pill like Zomato/Blinkit -->
-          <div style="background: rgba(29,29,34,0.96); backdrop-filter: blur(8px); padding: 4px 10px; border-radius: 9999px; border: 1.5px solid #F5C451; box-shadow: 0 4px 14px rgba(0,0,0,0.25); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10.5px; font-weight: 700; color: #FFFFFF; margin-bottom: 6px; white-space: nowrap; display: flex; align-items: center; gap: 6px;">
-            <span style="width: 7px; height: 7px; border-radius: 50%; background: ${isAtPickup ? '#10B981' : isCompleted ? '#3B82F6' : '#F5C451'}; ${isAtPickup ? 'box-shadow: 0 0 8px #10B981;' : 'box-shadow: 0 0 6px #F5C451;'}"></span>
+          <!-- Floating Status Pill like Zomato/Blinkit (Clean without 3/4 text) -->
+          <div style="background: rgba(29,29,34,0.96); backdrop-filter: blur(8px); padding: 3px 9px; border-radius: 9999px; border: 1.5px solid #F5C451; box-shadow: 0 4px 12px rgba(0,0,0,0.22); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10px; font-weight: 700; color: #FFFFFF; margin-bottom: 4px; white-space: nowrap; display: flex; align-items: center; gap: 5px;">
+            <span style="width: 6.5px; height: 6.5px; border-radius: 50%; background: ${isAtPickup ? '#10B981' : isCompleted ? '#3B82F6' : '#F5C451'}; ${isAtPickup ? 'box-shadow: 0 0 7px #10B981;' : 'box-shadow: 0 0 5px #F5C451;'}"></span>
             <span>${label}</span>
-            <!-- Mini Occupancy Indicator -->
-            ${coRidersCount === 0 ? `
-              <span style="background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); padding: 1px 6px; border-radius: 9999px; font-size: 9.5px; font-weight: 700; color: #FFFFFF;">👤 Driver Only (1/4)</span>
-            ` : coRidersCount === 1 ? `
-              <span style="background: rgba(245,196,81,0.22); border: 1px solid rgba(245,196,81,0.6); padding: 1px 6px; border-radius: 9999px; font-size: 9.5px; font-weight: 700; color: #F5C451;">👤+👤 1 Co-Rider (2/4)</span>
-            ` : `
-              <span style="background: rgba(16,185,129,0.22); border: 1px solid rgba(16,185,129,0.6); padding: 1px 6px; border-radius: 9999px; font-size: 9.5px; font-weight: 700; color: #10B981;">👤+👤👤 2 Riders (3/4)</span>
-            `}
           </div>
 
-          <!-- Pure Car Cutout Container (No Black Disc Circle) -->
-          <div style="position: relative; width: 68px; height: 68px; display: flex; align-items: center; justify-content: center;">
+          <!-- Pure Car Cutout Container (Sleek Compact Size) -->
+          <div style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
             ${isAtPickup ? `
-              <!-- Green Arrival Ripple Wave (Zomato/Blinkit arrival alert) radiating from car -->
-              <div style="position: absolute; width: 62px; height: 62px; border-radius: 50%; border: 3px solid #10B981; animation: cabPingWave 1.4s cubic-bezier(0,0,0.2,1) infinite;"></div>
-              <div style="position: absolute; width: 44px; height: 44px; border-radius: 50%; background: rgba(16,185,129,0.25); animation: cabGlowPulse 1.4s infinite;"></div>
+              <!-- Green Arrival Ripple Wave (Zomato/Blinkit arrival alert) -->
+              <div style="position: absolute; width: 42px; height: 42px; border-radius: 50%; border: 2.5px solid #10B981; animation: cabPingWave 1.4s cubic-bezier(0,0,0.2,1) infinite;"></div>
+              <div style="position: absolute; width: 30px; height: 30px; border-radius: 50%; background: rgba(16,185,129,0.25); animation: cabGlowPulse 1.4s infinite;"></div>
             ` : ''}
 
-            <!-- Pure Car Cutout Vector Rotated to Road Bearing -->
-            <div style="transform: rotate(${bearing}deg); transition: transform 0.1s linear; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.45));">
-              <svg width="28" height="56" viewBox="0 0 28 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Compact Pure Car Cutout Rotated to Road Bearing -->
+            <div style="transform: rotate(${bearing}deg); transition: transform 0.1s linear; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));">
+              <svg width="18" height="36" viewBox="0 0 24 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <!-- Front Wheels -->
-                <rect x="0.5" y="9" width="2" height="7" rx="1" fill="#18181B"/>
-                <rect x="25.5" y="9" width="2" height="7" rx="1" fill="#18181B"/>
+                <rect x="0.5" y="8" width="1.8" height="6" rx="0.8" fill="#18181B"/>
+                <rect x="21.7" y="8" width="1.8" height="6" rx="0.8" fill="#18181B"/>
                 <!-- Rear Wheels -->
-                <rect x="0.5" y="38" width="2" height="7" rx="1" fill="#18181B"/>
-                <rect x="25.5" y="38" width="2" height="7" rx="1" fill="#18181B"/>
+                <rect x="0.5" y="32" width="1.8" height="6" rx="0.8" fill="#18181B"/>
+                <rect x="21.7" y="32" width="1.8" height="6" rx="0.8" fill="#18181B"/>
 
                 <!-- Aerodynamic Car Chassis Cutout Body -->
-                <path d="M6 3 C9 1 19 1 22 3 C25 6 26 12 26 17 L27 20 C28 21 28 24 26.5 25 L26 26 L26 48 C26 53 24 55 21 55 L7 55 C4 55 2 53 2 48 L2 26 L1.5 25 C0 24 0 21 1 20 L2 17 C2 12 3 6 6 3 Z" fill="#F5C451" stroke="#FFFFFF" stroke-width="1.2"/>
+                <path d="M5 3 C8 1 16 1 19 3 C21 5 22 10 22 14 L23 17 C23.8 18 23.8 20 22.5 21 L22 22 L22 41 C22 45 20 47 18 47 L6 47 C4 47 2 45 2 41 L2 22 L1.5 21 C0.2 20 0.2 18 1 17 L2 14 C2 10 3 5 5 3 Z" fill="#F5C451" stroke="#FFFFFF" stroke-width="1.2"/>
 
                 <!-- Front Headlights (White Forward Beams) -->
-                <circle cx="6" cy="3.5" r="1.3" fill="#FFFFFF"/>
-                <circle cx="22" cy="3.5" r="1.3" fill="#FFFFFF"/>
+                <circle cx="5" cy="3.5" r="1.1" fill="#FFFFFF"/>
+                <circle cx="19" cy="3.5" r="1.1" fill="#FFFFFF"/>
                 
                 <!-- Front Windshield (Dark Curved Glass) -->
-                <path d="M5.5 13 Q14 10.5 22.5 13 L21 18 Q14 16 7 18 Z" fill="#18181B"/>
+                <path d="M4.5 11 Q12 9 19.5 11 L18 15 Q12 13.5 6 15 Z" fill="#18181B"/>
 
                 <!-- Panoramic Cabin Glass Interior with Driver & Passengers -->
-                <rect x="5.5" y="18" width="17" height="25" rx="3.5" fill="#18181B" stroke="#27272A" stroke-width="0.8"/>
+                <rect x="4.5" y="15" width="15" height="21" rx="3" fill="#18181B" stroke="#27272A" stroke-width="0.7"/>
 
                 <!-- Driver Seat (Front Right in India - RHD) -->
-                <!-- Steering Wheel Arc -->
-                <path d="M16 19.5 A2 2 0 0 1 20 19.5" stroke="#F5C451" stroke-width="1" fill="none"/>
-                <!-- Driver Avatar (White Head with Dark Cap) -->
-                <circle cx="18" cy="23" r="2.8" fill="#FFFFFF"/>
-                <circle cx="18" cy="23" r="1.1" fill="#18181B"/>
+                <path d="M14 16.5 A1.8 1.8 0 0 1 17.5 16.5" stroke="#F5C451" stroke-width="0.9" fill="none"/>
+                <circle cx="15.8" cy="19.5" r="2.2" fill="#FFFFFF"/>
+                <circle cx="15.8" cy="19.5" r="0.9" fill="#18181B"/>
 
-                <!-- Front Left Passenger Seat (Empty Contour) -->
-                <rect x="6.5" y="20.5" width="5" height="5" rx="1.5" fill="#27272A" opacity="0.3"/>
+                <!-- Front Left Passenger Seat -->
+                <rect x="5.5" y="17.5" width="4.5" height="4.5" rx="1.2" fill="#27272A" opacity="0.3"/>
 
                 <!-- Rear Left Seat (Co-Rider 1) -->
                 ${coRidersCount >= 1 ? `
-                  <!-- Co-Rider 1 Onboard (Warm Amber Avatar) -->
-                  <circle cx="9" cy="35" r="2.8" fill="#F5C451"/>
-                  <circle cx="9" cy="35" r="1.1" fill="#18181B"/>
+                  <circle cx="8" cy="29.5" r="2.2" fill="#F5C451"/>
+                  <circle cx="8" cy="29.5" r="0.9" fill="#18181B"/>
                 ` : `
-                  <!-- Empty Seat Contour -->
-                  <rect x="6.5" y="32.5" width="5" height="5" rx="1.5" fill="#27272A" opacity="0.25"/>
+                  <rect x="5.5" y="27.5" width="4.5" height="4.5" rx="1.2" fill="#27272A" opacity="0.25"/>
                 `}
 
                 <!-- Rear Right Seat (User Passenger) -->
                 ${coRidersCount >= 2 ? `
-                  <!-- User Onboard (Radiant Emerald Avatar) -->
-                  <circle cx="18" cy="35" r="2.8" fill="#10B981"/>
-                  <circle cx="18" cy="35" r="1.1" fill="#FFFFFF"/>
+                  <circle cx="16" cy="29.5" r="2.2" fill="#10B981"/>
+                  <circle cx="16" cy="29.5" r="0.9" fill="#FFFFFF"/>
                 ` : `
-                  <!-- Empty Seat Contour -->
-                  <rect x="15.5" y="32.5" width="5" height="5" rx="1.5" fill="#27272A" opacity="0.25"/>
+                  <rect x="13.5" y="27.5" width="4.5" height="4.5" rx="1.2" fill="#27272A" opacity="0.25"/>
                 `}
 
                 <!-- Rear Windshield -->
-                <path d="M7 44 Q14 46 21 44 L22 48 Q14 50 6 48 Z" fill="#18181B"/>
+                <path d="M5.5 37 Q12 39 18.5 37 L19 41 Q12 43 5 41 Z" fill="#18181B"/>
 
                 <!-- Rear Taillights (Red LED Strips) -->
-                <rect x="5.5" y="53.5" width="3.5" height="1.5" rx="0.5" fill="#EF4444"/>
-                <rect x="19" y="53.5" width="3.5" height="1.5" rx="0.5" fill="#EF4444"/>
+                <rect x="4.5" y="45.5" width="3" height="1.2" rx="0.5" fill="#EF4444"/>
+                <rect x="16.5" y="45.5" width="3" height="1.2" rx="0.5" fill="#EF4444"/>
               </svg>
             </div>
           </div>
         </div>
       `,
-      iconSize: [160, 105],
-      iconAnchor: [80, 60]
+      iconSize: [140, 72],
+      iconAnchor: [70, 46]
     });
 
     if (!vehicleMarkerRef.current || !map.hasLayer(vehicleMarkerRef.current)) {
