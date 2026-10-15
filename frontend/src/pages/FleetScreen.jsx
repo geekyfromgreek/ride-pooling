@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import LeafletMap from '../components/LeafletMap';
 import { FLEET_VEHICLES } from '../data/nashikLocations';
 
+/**
+ * PoolIQ Fleet Telemetry Screen — Warm Humanist Interface
+ * Clean vehicle roster with live EV battery states, seat occupancy, and daylight map.
+ */
 export default function FleetScreen({ backendVehicles = null }) {
   const [filter, setFilter] = useState('all');
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -10,9 +14,7 @@ export default function FleetScreen({ backendVehicles = null }) {
   const [selectedVehicleId, setSelectedVehicleId] = useState('V1');
   const [avgSpeed, setAvgSpeed] = useState(31);
   const [utilization, setUtilization] = useState(88);
-  const [activeBatches, setActiveBatches] = useState(9);
 
-  // Sync with real backend vehicles if available
   useEffect(() => {
     if (backendVehicles && backendVehicles.length > 0) {
       const merged = FLEET_VEHICLES.map((fallback, idx) => {
@@ -25,7 +27,7 @@ export default function FleetScreen({ backendVehicles = null }) {
           ...fallback,
           id: bv.id || fallback.id,
           status: fallback.status === 'maintenance' ? 'maintenance' : (isTransit ? 'transit' : 'terminal'),
-          statusLabel: fallback.status === 'maintenance' ? 'MAINTENANCE' : (isTransit ? 'IN TRANSIT' : 'AT TERMINAL'),
+          statusLabel: fallback.status === 'maintenance' ? 'Maintenance' : (isTransit ? 'In Transit' : 'At Terminal'),
           routeVector: hasRoute ? 'Active Optimized Dispatch' : fallback.routeVector,
           speed: fallback.status === 'maintenance' ? '0 km/h' : (isTransit ? (fallback.speed === '0 km/h' ? '36 km/h' : fallback.speed) : '0 km/h'),
           soc: fallback.soc,
@@ -40,19 +42,16 @@ export default function FleetScreen({ backendVehicles = null }) {
     }
   }, [backendVehicles]);
 
-  // Real-time telemetry progression and coordinate motion every 2 seconds
   useEffect(() => {
     if (!autoRefresh) return;
     const timer = setInterval(() => {
-      setRefreshCountdown((prev) => (prev <= 1 ? 2 : prev - 1));
-
-      // Coordinate micro-motion & speed fluctuation for transit vehicles
+      setRefreshCountdown((prev) => (prev <= 1 ? 5 : prev - 1));
       setVehicles((curr) =>
         curr.map((v) => {
           if (v.status === 'transit') {
             const latJitter = (Math.random() - 0.5) * 0.0008;
             const lonJitter = (Math.random() - 0.5) * 0.0008;
-            const spd = Math.floor(32 + Math.random() * 16);
+            const spd = Math.floor(30 + Math.random() * 12);
             return {
               ...v,
               lat: v.lat + latJitter,
@@ -60,21 +59,12 @@ export default function FleetScreen({ backendVehicles = null }) {
               speed: `${spd} km/h`
             };
           }
-          if (v.status === 'maintenance') {
-            const currentSocNum = parseInt(v.soc) || 32;
-            const newSoc = currentSocNum < 98 ? currentSocNum + 1 : 32;
-            return {
-              ...v,
-              soc: `${newSoc}%`
-            };
-          }
           return v;
         })
       );
-      setAvgSpeed(Math.floor(30 + Math.random() * 6));
-      setUtilization(Math.floor(84 + Math.random() * 6));
-      setActiveBatches(Math.floor(8 + Math.random() * 3));
-    }, 2000);
+      setAvgSpeed(Math.floor(30 + Math.random() * 5));
+      setUtilization(Math.floor(82 + Math.random() * 8));
+    }, 2500);
     return () => clearInterval(timer);
   }, [autoRefresh]);
 
@@ -84,277 +74,139 @@ export default function FleetScreen({ backendVehicles = null }) {
   });
 
   return (
-    <div className="flex flex-col w-full px-4 gap-4 text-on-surface select-none pb-8">
-      {/* Status & Header Meta */}
-      <div className="flex flex-col gap-1 pt-1">
-        <div className="flex items-center justify-between">
-          <span className="font-label-mono text-label-mono text-on-surface uppercase tracking-wider font-semibold">
-            FLEET TELEMETRY
-          </span>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-high border border-surface-container-highest/60">
-            <span className="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
-            <span className="font-label-mono text-label-mono text-primary font-medium tracking-wide">
-              {vehicles.filter((v) => v.status !== 'maintenance').length} / {vehicles.length} ONLINE
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="font-body-sm text-body-sm text-on-surface-variant">
-            Live cluster telemetry &amp; dynamic routing
-          </span>
-          <span className="font-label-mono text-[10px] text-tertiary-fixed-dim uppercase tracking-wider">
-            Active Batching
-          </span>
-        </div>
-      </div>
-
-      {/* Filter Pills Bar */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5" id="fleet-filters">
-        <button
-          onClick={() => setFilter('all')}
-          className={`filter-pill shrink-0 px-3 py-1.5 rounded-full font-label-mono text-label-mono font-semibold transition-all cursor-pointer ${
-            filter === 'all'
-              ? 'bg-primary-container text-on-primary-container shadow-sm'
-              : 'bg-surface-container text-on-surface-variant hover:text-on-surface border border-surface-container-high'
-          }`}
-        >
-          All Vehicles ({vehicles.length})
-        </button>
-        <button
-          onClick={() => setFilter('transit')}
-          className={`filter-pill shrink-0 px-3 py-1.5 rounded-full font-label-mono text-label-mono font-medium transition-all cursor-pointer ${
-            filter === 'transit'
-              ? 'bg-primary-container text-on-primary-container shadow-sm'
-              : 'bg-surface-container text-on-surface-variant hover:text-on-surface border border-surface-container-high'
-          }`}
-        >
-          In Transit ({vehicles.filter((v) => v.status === 'transit').length})
-        </button>
-        <button
-          onClick={() => setFilter('terminal')}
-          className={`filter-pill shrink-0 px-3 py-1.5 rounded-full font-label-mono text-label-mono font-medium transition-all cursor-pointer ${
-            filter === 'terminal'
-              ? 'bg-primary-container text-on-primary-container shadow-sm'
-              : 'bg-surface-container text-on-surface-variant hover:text-on-surface border border-surface-container-high'
-          }`}
-        >
-          At Terminals ({vehicles.filter((v) => v.status === 'terminal').length})
-        </button>
-        <button
-          onClick={() => setFilter('maintenance')}
-          className={`filter-pill shrink-0 px-3 py-1.5 rounded-full font-label-mono text-label-mono font-medium transition-all cursor-pointer ${
-            filter === 'maintenance'
-              ? 'bg-primary-container text-on-primary-container shadow-sm'
-              : 'bg-surface-container text-on-surface-variant hover:text-on-surface border border-surface-container-high'
-          }`}
-        >
-          Maintenance ({vehicles.filter((v) => v.status === 'maintenance').length})
-        </button>
-      </div>
-
-      {/* Live Cluster Overview Card with Interactive Leaflet Fleet Map */}
-      <div className="relative overflow-hidden rounded-2xl p-4 bg-surface-container-low shadow-xl flex flex-col gap-3.5 border border-surface-container-high">
-        <div className="flex items-start justify-between">
-          <div className="flex flex-col">
-            <span className="font-label-mono text-[10px] uppercase text-outline tracking-wider">
-              Metropolitan Zone
-            </span>
-            <span className="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight">
-              Nashik Urban Fleet V2.4
-            </span>
-          </div>
-          <span className="p-2 rounded-lg bg-surface-container text-primary border border-surface-container-high">
-            <span className="material-symbols-outlined text-[20px]">hub</span>
-          </span>
-        </div>
-
-        {/* Live Leaflet Fleet Cluster Map View */}
-        <div className="relative w-full h-56 rounded-xl bg-surface-container-lowest overflow-hidden border border-surface-container-high/60 shadow-inner">
-          <LeafletMap
-            center={[19.9977, 73.7803]}
-            zoom={12}
-            fleetVehicles={filteredVehicles}
-            selectedVehicleId={selectedVehicleId}
-            onVehicleSelect={(veh) => setSelectedVehicleId(veh.id)}
-            height="224px"
-          />
-          <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container-high/90 border border-surface-container-highest/40 z-[400] backdrop-blur-sm">
-            <span className="material-symbols-outlined text-[12px] text-primary">satellite_alt</span>
-            <span className="font-label-mono text-[9px] text-on-surface-variant uppercase tracking-wider font-semibold">
-              Spatial Fleet Grid Synced · Tracking {selectedVehicleId || 'V1'}
-            </span>
-          </div>
-          <div className="absolute bottom-2 right-2 bg-surface-container-high/90 px-2 py-0.5 rounded border border-surface-container-highest/40 z-[400] backdrop-blur-sm">
-            <span className="font-label-mono text-[9px] text-outline">
-              LAT 19.9975° N · LON 73.7898° E
-            </span>
-          </div>
-        </div>
-
-        {/* Metrics Triad */}
-        <div className="grid grid-cols-3 gap-2 pt-0.5">
-          <div className="flex flex-col p-2.5 rounded-lg bg-surface-container border border-surface-container-high/60">
-            <span className="font-label-mono text-[10px] text-on-surface-variant uppercase">
-              Avg Speed
-            </span>
-            <span className="font-headline-md text-headline-md text-on-surface font-semibold mt-0.5">
-              {avgSpeed} <span className="text-body-sm font-normal text-outline">km/h</span>
-            </span>
-            <span className="font-label-mono text-[9px] text-primary mt-1 font-semibold">▲ +3.2 km/h</span>
-          </div>
-          <div className="flex flex-col p-2.5 rounded-lg bg-surface-container border border-surface-container-high/60">
-            <span className="font-label-mono text-[10px] text-on-surface-variant uppercase">
-              Utilization
-            </span>
-            <span className="font-headline-md text-headline-md text-on-surface font-semibold mt-0.5">
-              {utilization}<span className="text-body-sm font-normal text-outline">%</span>
-            </span>
-            <div className="w-full bg-surface-variant h-1 rounded-full mt-2 overflow-hidden">
-              <div
-                className="bg-primary-container h-full transition-all duration-500"
-                style={{ width: `${utilization}%` }}
-              ></div>
-            </div>
-          </div>
-          <div className="flex flex-col p-2.5 rounded-lg bg-surface-container border border-surface-container-high/60">
-            <span className="font-label-mono text-[10px] text-on-surface-variant uppercase">
-              Active Batches
-            </span>
-            <span className="font-headline-md text-headline-md text-on-surface font-semibold mt-0.5">
-              {activeBatches < 10 ? `0${activeBatches}` : activeBatches}
-            </span>
-            <span className="font-label-mono text-[9px] text-tertiary-fixed-dim mt-1 font-semibold">
-              Optimal Load
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Vehicle Roster Header */}
+    <div className="flex-1 flex flex-col w-full px-4 pt-1 pb-8 max-w-md mx-auto select-none gap-4 animate-fade-in">
+      {/* Header Banner */}
       <div className="flex items-center justify-between pt-1">
-        <div className="flex items-center gap-2">
-          <span className="font-label-mono text-label-mono uppercase tracking-wider text-on-surface font-semibold">
-            Active Roster
-          </span>
-          <span className="px-2 py-0.5 rounded-full bg-surface-container-high text-outline font-label-mono text-[10px]">
-            {filteredVehicles.length} Visible
-          </span>
+        <div>
+          <h2 className="text-[20px] font-bold text-[#1D1D22] tracking-tight leading-none">
+            Fleet Operations
+          </h2>
+          <p className="text-[12px] text-[#787571] mt-1">
+            Real-time status of electric transit shuttles
+          </p>
         </div>
-        <button
-          onClick={() => setAutoRefresh(!autoRefresh)}
-          className="flex items-center gap-1 font-label-mono text-[11px] text-primary hover:underline cursor-pointer"
-        >
-          <span>{autoRefresh ? `Auto-refresh ${refreshCountdown}s` : 'Paused'}</span>
-          <span className={`material-symbols-outlined text-[14px] ${autoRefresh ? 'animate-spin' : ''}`}>
-            sync
-          </span>
-        </button>
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[#EAE5DC] text-[11px] font-semibold text-[#1D1D22] shadow-xs">
+          <span className="w-2 h-2 rounded-full bg-[#F5C451]"></span>
+          <span>{vehicles.filter(v => v.status !== 'maintenance').length} Online</span>
+        </div>
       </div>
 
-      {/* Vehicle Cards List */}
-      <div className="flex flex-col gap-3" id="roster-container">
+      {/* Filter Tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+        {[
+          { key: 'all', label: `All (${vehicles.length})` },
+          { key: 'transit', label: `In Transit (${vehicles.filter(v => v.status === 'transit').length})` },
+          { key: 'terminal', label: `At Terminal (${vehicles.filter(v => v.status === 'terminal').length})` },
+          { key: 'maintenance', label: `Service (${vehicles.filter(v => v.status === 'maintenance').length})` }
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setFilter(tab.key)}
+            className={`px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              filter === tab.key
+                ? 'bg-[#1D1D22] text-white shadow-xs'
+                : 'bg-white text-[#787571] hover:text-[#1D1D22] border border-[#EAE5DC]'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Fleet Map Deck */}
+      <div className="relative w-full h-[240px] rounded-[20px] overflow-hidden border border-[#EAE5DC] shadow-[0_2px_12px_rgba(29,29,34,0.04)] bg-[#EDE9E1]">
+        <LeafletMap
+          center={[19.9977, 73.7803]}
+          zoom={12}
+          fleetVehicles={filteredVehicles}
+          selectedVehicleId={selectedVehicleId}
+          onVehicleSelect={(veh) => setSelectedVehicleId(veh.id)}
+          height="240px"
+        />
+        <div className="absolute top-3 left-3 z-[400] pointer-events-none">
+          <div className="bg-white/95 backdrop-blur-md px-3 py-1 rounded-full border border-[#EAE5DC] shadow-sm flex items-center gap-1.5 text-xs font-semibold text-[#1D1D22]">
+            <span className="w-2 h-2 rounded-full bg-[#1D1D22]"></span>
+            <span>Tracking Vehicle {selectedVehicleId || 'V1'}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Fleet Metrics Strip */}
+      <div className="grid grid-cols-2 gap-2.5">
+        <div className="bg-white rounded-[24px] p-4 border border-[#EAE5DC] shadow-[0_4px_20px_rgba(29,29,34,0.06)] flex flex-col">
+          <span className="text-[11px] font-medium text-[#787571] uppercase">Average Speed</span>
+          <span className="text-[22px] font-bold text-[#1D1D22] mt-0.5">{avgSpeed} km/h</span>
+          <span className="text-[11px] text-[#787571]">Cruising in transit flow</span>
+        </div>
+        <div className="bg-white rounded-[24px] p-4 border border-[#EAE5DC] shadow-[0_4px_20px_rgba(29,29,34,0.06)] flex flex-col">
+          <span className="text-[11px] font-medium text-[#787571] uppercase">Fleet Utilization</span>
+          <span className="text-[22px] font-bold text-[#1D1D22] mt-0.5">{utilization}%</span>
+          <span className="text-[11px] text-[#787571]">Optimal seat allocation</span>
+        </div>
+      </div>
+
+      {/* Vehicle Cards Roster */}
+      <div className="flex flex-col gap-3">
         {filteredVehicles.map((v) => {
           const isSelected = selectedVehicleId === v.id;
           return (
             <div
               key={v.id}
               onClick={() => setSelectedVehicleId(v.id)}
-              className={`vehicle-card flex flex-col p-3.5 rounded-xl cursor-pointer transition-all ${
-                isSelected
-                  ? 'bg-surface-container border-2 border-primary ring-2 ring-primary/20 shadow-xl shadow-primary/10'
-                  : 'bg-surface-container-low shadow-md border border-surface-container-high hover:border-primary/40'
+              className={`bg-white rounded-[24px] p-5 border transition-all cursor-pointer flex flex-col gap-3 shadow-[0_4px_20px_rgba(29,29,34,0.06)] ${
+                isSelected ? 'border-2 border-[#1D1D22]' : 'border border-[#EAE5DC]'
               }`}
             >
-              {/* Responsive Header Row - Never truncate labels */}
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-primary border border-surface-container-highest/40 shrink-0">
+              <div className="flex items-start justify-between pb-2 border-b border-[#EAE5DC]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#FAF7F2] border border-[#EAE5DC] flex items-center justify-center text-[#1D1D22]">
                     <span className="material-symbols-outlined text-[20px]">electric_car</span>
                   </div>
-                  <div className="flex flex-col min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-label-lg text-sm font-bold text-on-surface">
-                        Vehicle {v.id}
-                      </span>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="text-[15px] font-bold text-[#1D1D22]">Vehicle {v.id}</h3>
                       {isSelected && (
-                        <span className="px-1.5 py-0.5 rounded bg-primary text-on-primary font-label-mono text-[8.5px] uppercase font-extrabold tracking-wider animate-pulse">
-                          ● TRACKING
-                        </span>
+                        <span className="w-2 h-2 rounded-full bg-[#F5C451]"></span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 font-body-sm text-[11px] text-on-surface-variant truncate">
-                      <span>{v.model}</span>
-                      <span className="text-outline">·</span>
-                      <span className="font-mono text-outline">#{v.license}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="shrink-0 flex items-center">
-                  <span className={`px-2.5 py-1 rounded-md font-label-mono text-[9.5px] font-bold uppercase tracking-wider text-center ${
-                    v.status === 'transit'
-                      ? 'bg-primary/15 text-primary border border-primary/30'
-                      : v.status === 'terminal'
-                      ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30'
-                      : 'bg-rose-400/15 text-rose-300 border border-rose-400/30'
-                  }`}>
-                    {v.status === 'transit' ? 'IN TRANSIT' : v.status === 'terminal' ? 'AT TERMINAL' : 'MAINTENANCE'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Route Trajectory */}
-              <div className="mt-3 p-2.5 rounded-lg bg-surface-container flex items-center gap-2 border border-surface-container-high/60">
-                <span className="material-symbols-outlined text-primary text-[18px] shrink-0">
-                  {v.status === 'maintenance' ? 'build' : v.status === 'terminal' ? 'local_parking' : 'turn_sharp_right'}
-                </span>
-                <div className="flex flex-col min-w-0 flex-1">
-                  <span className="font-label-mono text-[10px] text-outline uppercase">
-                    {v.status === 'maintenance' ? 'Service Depot Location' : v.status === 'terminal' ? 'Terminal Staging Area' : 'Active Route Vector'}
-                  </span>
-                  <span className="font-body-md text-body-md font-medium text-on-surface truncate">
-                    {v.routeVector}
-                  </span>
-                </div>
-              </div>
-
-              {/* Telemetry Segment Bar */}
-              <div className="grid grid-cols-3 gap-2 mt-2.5">
-                <div className="flex flex-col p-2 rounded bg-surface-container-lowest border border-surface-container-high/40 min-w-0">
-                  <span className="font-label-mono text-[10px] text-outline uppercase">Speed</span>
-                  <span className="font-label-lg text-label-lg text-on-surface font-semibold mt-0.5 truncate">
-                    {v.speed}
-                  </span>
-                </div>
-
-                {/* Segmented Seat Allocation Bar */}
-                <div className="flex flex-col p-2 rounded bg-surface-container-lowest border border-surface-container-high/40 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="font-label-mono text-[10px] text-outline uppercase">Seats</span>
-                    <span className="font-label-mono text-[10px] text-on-surface-variant font-semibold">
-                      {v.seatsOccupied}/{v.seatsTotal}
+                    <span className="text-[11px] text-[#787571]">
+                      {v.driver} · {v.model} ({v.license})
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 mt-1.5">
-                    {Array.from({ length: v.seatsTotal }).map((_, idx) => (
-                      <div
-                        key={idx}
-                        className="w-2.5 h-3 rounded-[1px] transition-all"
-                        style={{
-                          backgroundColor: idx < v.seatsOccupied ? '#0ED4A8' : '#232328',
-                          boxShadow: idx < v.seatsOccupied ? '0 0 4px #0ED4A8' : 'none'
-                        }}
-                        title={idx < v.seatsOccupied ? 'Reserved Seat' : 'Available Seat'}
-                      />
-                    ))}
-                  </div>
                 </div>
 
-                <div className="flex flex-col p-2 rounded bg-surface-container-lowest border border-surface-container-high/40 min-w-0">
-                  <span className="font-label-mono text-[10px] text-outline uppercase">Battery</span>
-                  <span className="font-label-lg text-label-lg text-primary font-semibold mt-0.5 truncate">
-                    {v.soc}
-                  </span>
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                  v.status === 'transit'
+                    ? 'bg-[#F5C451]/20 text-[#1D1D22] border border-[#F5C451]/40'
+                    : v.status === 'terminal'
+                    ? 'bg-[#FAF7F2] text-[#787571] border border-[#EAE5DC]'
+                    : 'bg-red-50 text-red-700 border border-red-200'
+                }`}>
+                  {v.statusLabel || v.status}
+                </span>
+              </div>
+
+              {/* Status details */}
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="p-2.5 rounded-xl bg-[#FAF7F2] border border-[#EAE5DC] flex flex-col">
+                  <span className="text-[10px] uppercase text-[#787571]">Speed</span>
+                  <span className="text-[13px] font-bold text-[#1D1D22] mt-0.5">{v.speed}</span>
                 </div>
+
+                <div className="p-2.5 rounded-xl bg-[#FAF7F2] border border-[#EAE5DC] flex flex-col">
+                  <span className="text-[10px] uppercase text-[#787571]">Seats</span>
+                  <span className="text-[13px] font-bold text-[#1D1D22] mt-0.5">{v.seatsOccupied}/{v.seatsTotal}</span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-[#FAF7F2] border border-[#EAE5DC] flex flex-col">
+                  <span className="text-[10px] uppercase text-[#787571]">Battery</span>
+                  <span className="text-[13px] font-bold text-[#1D1D22] mt-0.5">{v.soc}</span>
+                </div>
+              </div>
+
+              <div className="text-[11px] text-[#787571] flex items-center gap-1.5 px-1">
+                <span className="material-symbols-outlined text-[14px] text-[#1D1D22]">turn_sharp_right</span>
+                <span className="truncate">{v.routeVector}</span>
               </div>
             </div>
           );

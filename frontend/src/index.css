@@ -1,63 +1,56 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #F3F2EF;
-  --color-surface: #FAF9F6;
-  --color-surface-dim: #F3F2EF;
-  --color-surface-bright: #FFFFFF;
+  --color-background: #FAF7F2;
+  --color-surface: #FAF7F2;
+  --color-surface-dim: #DCDAD4;
+  --color-surface-bright: #FCF9F3;
   --color-surface-container-lowest: #FFFFFF;
-  --color-surface-container-low: #FAF9F6;
-  --color-surface-container: #F2EFEB;
-  --color-surface-container-high: #E8E5DF;
-  --color-surface-container-highest: #DDD9D0;
-  --color-surface-variant: #EAE8E3;
+  --color-surface-container-low: #F6F3ED;
+  --color-surface-container: #FFFFFF;
+  --color-surface-container-high: #F4EFEB;
+  --color-surface-container-highest: #EAE5DC;
+  --color-surface-variant: #EAE5DC;
 
-  --color-on-surface: #292B29;
-  --color-on-surface-variant: #686B66;
-  --color-inverse-surface: #30312F;
-  --color-inverse-on-surface: #F6F5F1;
+  --color-on-surface: #1D1D22;
+  --color-on-surface-variant: #787571;
+  --color-inverse-surface: #31312D;
+  --color-inverse-on-surface: #F3F0EA;
 
-  --color-outline: #898B84;
-  --color-outline-variant: #DCDAD4;
-  --color-border: #DCDAD4;
+  --color-outline: #807663;
+  --color-outline-variant: #EAE5DC;
+  --color-border: #EAE5DC;
 
-  --color-primary: #858C7B;
-  --color-primary-container: #737A69;
+  --color-primary: #1D1D22;
+  --color-primary-container: #F5C451;
   --color-on-primary: #FFFFFF;
-  --color-on-primary-container: #232720;
-  --color-primary-fixed: #858C7B;
-  --color-primary-fixed-dim: #737A69;
-  --color-on-primary-fixed: #FFFFFF;
-  --color-on-primary-fixed-variant: #2A3025;
+  --color-on-primary-container: #1D1D22;
+  --color-primary-fixed: #FFDF9D;
+  --color-primary-fixed-dim: #F0C04D;
+  --color-on-primary-fixed: #251A00;
+  --color-on-primary-fixed-variant: #5B4300;
 
-  --color-accent: #858C7B;
-  --color-accent-hover: #737A69;
-  --color-accent-subtle: #E5E8DF;
-  --color-accent-text: #343B30;
+  --color-accent: #F5C451;
+  --color-accent-hover: #E5B43F;
+  --color-accent-subtle: #FDF4DE;
+  --color-accent-text: #1D1D22;
 
-  --color-dark-surface: #30312F;
-  --color-dark-surface-elevated: #3A3C38;
-  --color-dark-text: #F6F5F1;
-  --color-dark-text-muted: #A3A69D;
-  --color-dark-border: #424440;
+  --color-secondary: #787571;
+  --color-secondary-container: #F4EFEB;
+  --color-on-secondary: #FFFFFF;
+  --color-on-secondary-container: #1D1D22;
 
-  --color-secondary: #686B66;
-  --color-secondary-container: #EAE8E3;
-  --color-on-secondary: #292B29;
-  --color-on-secondary-container: #343B30;
-
-  --color-tertiary: #9E7B5B;
-  --color-tertiary-container: #EFE6DD;
+  --color-tertiary: #006687;
+  --color-tertiary-container: #7FD5FF;
   --color-on-tertiary: #FFFFFF;
-  --color-on-tertiary-container: #472D18;
-  --color-tertiary-fixed-dim: #8F6C4C;
+  --color-on-tertiary-container: #005C7A;
 
-  --color-error: #A84E4A;
-  --color-error-container: #FBEAEA;
+  --color-error: #BA1A1A;
+  --color-error-container: #FFDAD6;
   --color-on-error: #FFFFFF;
-  --color-on-error-container: #5C1C19;
+  --color-on-error-container: #93000A;
 
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 @layer base {
@@ -65,10 +58,10 @@
     width: 100%;
     margin: 0;
     padding: 0;
-    background-color: #F3F2EF;
-    color: #292B29;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    font-feature-settings: 'tnum' 1;
+    background-color: #FAF7F2;
+    color: #1D1D22;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     overscroll-behavior: none;
     -webkit-font-smoothing: antialiased;
   }
@@ -86,81 +79,58 @@
   }
 }
 
-/* Custom Typography Classes as per DESIGN.md */
-.font-label-mono {
-  font-family: 'Inter', monospace, sans-serif;
-  font-size: 11px;
-  line-height: 14px;
-  letter-spacing: 0.06em;
-  font-weight: 600;
-}
-
-.text-label-mono {
-  font-size: 11px;
-  line-height: 14px;
-  letter-spacing: 0.06em;
-}
-
-.font-headline-xl {
-  font-size: 36px;
-  line-height: 40px;
-  letter-spacing: -0.03em;
-  font-weight: 600;
-}
-
-.font-headline-xl-mobile {
-  font-size: 28px;
-  line-height: 32px;
+/* Warm Humanist Typography */
+.font-display {
+  font-size: 2.25rem;
+  line-height: 2.75rem;
   letter-spacing: -0.025em;
-  font-weight: 600;
-}
-
-.font-headline-lg {
-  font-size: 24px;
-  line-height: 28px;
-  letter-spacing: -0.02em;
-  font-weight: 600;
-}
-
-.font-headline-md {
-  font-size: 20px;
-  line-height: 24px;
-  letter-spacing: -0.015em;
   font-weight: 500;
 }
 
-.font-body-lg {
-  font-size: 16px;
-  line-height: 24px;
-  letter-spacing: -0.01em;
-  font-weight: 400;
+.font-headline-lg {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  letter-spacing: -0.015em;
+  font-weight: 700;
 }
 
-.font-body-md {
-  font-size: 14px;
-  line-height: 20px;
+.font-headline-md {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+.font-title-md {
+  font-size: 1.0625rem;
+  line-height: 1.5rem;
+  letter-spacing: -0.005em;
+  font-weight: 600;
+}
+
+.font-body-lg {
+  font-size: 1rem;
+  line-height: 1.5rem;
   letter-spacing: -0.005em;
   font-weight: 400;
 }
 
-.font-body-sm {
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0em;
+.font-body-md {
+  font-size: 0.875rem;
+  line-height: 1.375rem;
   font-weight: 400;
 }
 
-.font-label-lg {
-  font-size: 13px;
-  line-height: 16px;
-  letter-spacing: 0.01em;
-  font-weight: 500;
+.font-body-sm {
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  font-weight: 400;
 }
 
-/* Leaflet Container Dark Theme Customization */
+/* Leaflet Container Warm Daytime Light Theme Customization */
 .leaflet-container {
-  background-color: #0e0e13 !important;
-  font-family: 'Inter', sans-serif !important;
+  background-color: #EDE9E1 !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
   z-index: 0;
   position: relative;
 }
@@ -170,61 +140,70 @@
 }
 
 .leaflet-control-attribution {
-  background: rgba(19, 19, 24, 0.75) !important;
-  color: #85948d !important;
+  background: rgba(250, 247, 242, 0.85) !important;
+  color: #787571 !important;
   font-size: 9px !important;
-  border-radius: 4px;
+  border-radius: 9999px;
   margin: 4px !important;
-  padding: 2px 6px !important;
+  padding: 2px 8px !important;
+  border: 1px solid #EAE5DC;
 }
 
 .leaflet-control-attribution a {
-  color: #bacac2 !important;
+  color: #1D1D22 !important;
+  font-weight: 500;
 }
 
-/* Radar pulse animation */
-@keyframes radar-pulse {
+/* Radar & Live Beacon Pulse Animation */
+@keyframes warm-beacon-pulse {
   0% {
-    transform: scale(0.6);
+    transform: scale(0.9);
     opacity: 0.8;
   }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.3;
+  }
   100% {
-    transform: scale(2.4);
-    opacity: 0;
+    transform: scale(0.9);
+    opacity: 0.8;
   }
 }
 
-.animate-radar {
-  animation: radar-pulse 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+.animate-beacon {
+  animation: warm-beacon-pulse 2s ease-in-out infinite;
 }
 
-/* Leaflet Dark Tooltips & Popups */
-.leaflet-dark-tooltip {
-  background-color: #1b1b20 !important;
-  color: #e4e1e9 !important;
-  border: 1px solid #35343a !important;
-  border-radius: 6px !important;
-  padding: 4px 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+/* Warm Humanist Leaflet Tooltips & Popups */
+.leaflet-warm-tooltip, .leaflet-dark-tooltip {
+  background-color: #FFFFFF !important;
+  color: #1D1D22 !important;
+  border: 1px solid #EAE5DC !important;
+  border-radius: 9999px !important;
+  padding: 4px 10px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 14px rgba(29, 29, 34, 0.08) !important;
 }
 
-.leaflet-dark-tooltip::before {
-  border-top-color: #35343a !important;
+.leaflet-warm-tooltip::before, .leaflet-dark-tooltip::before {
+  border-top-color: #EAE5DC !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background: #1b1b20 !important;
-  color: #e4e1e9 !important;
-  border-radius: 12px !important;
-  border: 1px solid #35343a !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+  background: #FFFFFF !important;
+  color: #1D1D22 !important;
+  border-radius: 20px !important;
+  border: 1px solid #EAE5DC !important;
+  box-shadow: 0 8px 30px rgba(29, 29, 34, 0.08) !important;
+  padding: 4px !important;
 }
 
 .leaflet-popup-tip {
-  background: #1b1b20 !important;
+  background: #FFFFFF !important;
 }
 
-/* Utility to hide native scrollbars while preserving full scrollability */
+/* Utility to hide native scrollbars */
 .no-scrollbar::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;

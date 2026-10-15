@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import LeafletMap from '../components/LeafletMap';
-import ZeroTrustGate from '../components/ZeroTrustGate';
-import RouteDiffView from '../components/RouteDiffView';
 import { fetchRoadRoute, getAccurateDistance } from '../utils/routing';
-import { runDispatch } from '../utils/api';
 import { NASHIK_HUBS, getSharedRideOrigin } from '../data/nashikLocations';
 
 export default function PoolScreen({
@@ -15,7 +12,7 @@ export default function PoolScreen({
   assignedVehicle = null,
   preselectedHubs = null
 }) {
-  // Hubs selection: Default to PVG COE (Nashik) or user's saved preference
+  // Hubs selection: Default to PVG COE or CBS Chowk
   const [originIndex, setOriginIndex] = useState(() => {
     const saved = localStorage.getItem('pooliq_preferred_hub');
     if (saved) {
@@ -80,7 +77,6 @@ export default function PoolScreen({
     const clickLat = Number(latlng.lat.toFixed(6));
     const clickLon = Number(latlng.lng.toFixed(6));
 
-    // Find nearest landmark for context
     let nearestHub = NASHIK_HUBS[0];
     let minDis = 999999;
     for (const h of NASHIK_HUBS) {
@@ -91,11 +87,9 @@ export default function PoolScreen({
       }
     }
     const distM = Math.round(minDis * 1000);
-    
-    // Check if specifically on PVG campus
     const distToPvg = Math.hypot((20.0369 - clickLat) * 111, (73.8007 - clickLon) * 104) * 1000;
     const shortDesc = distToPvg < 400
-      ? 'PVG Campus (Dindori Rd)'
+      ? 'PVG Campus'
       : distM < 250
         ? nearestHub.shortName
         : `${distM}m from ${nearestHub.shortName}`;
@@ -103,7 +97,7 @@ export default function PoolScreen({
     const customPinHub = {
       id: 'user_map_pin',
       name: `Pinned Pickup (${shortDesc})`,
-      shortName: `Pin · ${shortDesc}`,
+      shortName: shortDesc,
       lat: clickLat,
       lon: clickLon,
       accuracy: 5,
@@ -113,7 +107,7 @@ export default function PoolScreen({
     setLiveLocation(customPinHub);
     setUseLiveLocation(true);
     setOutsideNashikAlert(null);
-    setLocationStatus(`📍 Pickup pinned to map near ${nearestHub.shortName}`);
+    setLocationStatus(`📍 Pickup pinned near ${nearestHub.shortName}`);
     setTimeout(() => setLocationStatus(''), 4000);
   };
 
@@ -123,23 +117,19 @@ export default function PoolScreen({
       return;
     }
     setIsLocating(true);
-    setLocationStatus('Acquiring high-accuracy GPS fix...');
+    setLocationStatus('Acquiring GPS fix...');
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const rawLat = Number(pos.coords.latitude.toFixed(6));
         const rawLon = Number(pos.coords.longitude.toFixed(6));
         const accuracy = Math.round(pos.coords.accuracy || 15);
 
-        // Distance from Nashik Metropolitan Center (CBS Chowk: 19.9977, 73.7803)
         const dLat = (rawLat - 19.9977) * 111.0;
         const dLon = (rawLon - 73.7803) * 104.0;
         const distFromNashikKm = Math.round(Math.hypot(dLat, dLon));
-
-        // PoolIQ operates exclusively within the Nashik Metropolitan transit network (radius ~35 km)
         const isWithinNashik = distFromNashikKm <= 35;
 
         if (isWithinNashik) {
-          // USER IS PHYSICALLY IN NASHIK: Use exact live coordinates
           let nearestHub = NASHIK_HUBS[0];
           let minDis = 999999;
           for (const h of NASHIK_HUBS) {
@@ -150,11 +140,9 @@ export default function PoolScreen({
             }
           }
           const distM = Math.round(minDis * 1000);
-
-          // Check if right at PVG Nashik
           const distToPvg = Math.hypot((20.0369 - rawLat) * 111, (73.8007 - rawLon) * 104) * 1000;
           const shortDesc = distToPvg < 500
-            ? 'PVG COE (Nashik)'
+            ? 'PVG Campus'
             : distM < 250
               ? nearestHub.shortName
               : `${distM}m from ${nearestHub.shortName}`;
@@ -162,7 +150,7 @@ export default function PoolScreen({
           const userGpsHub = {
             id: 'user_live_gps',
             name: `Live Location (${shortDesc})`,
-            shortName: `Live GPS · ${shortDesc}`,
+            shortName: shortDesc,
             lat: rawLat,
             lon: rawLon,
             accuracy,
@@ -174,36 +162,23 @@ export default function PoolScreen({
           setUseLiveLocation(true);
           setIsLocating(false);
           setOutsideNashikAlert(null);
-          setLocationStatus(`📍 Live GPS locked: ${shortDesc} (±${accuracy}m accuracy)`);
-          setTimeout(() => setLocationStatus(''), 4500);
+          setLocationStatus(`📍 GPS locked: ${shortDesc}`);
+          setTimeout(() => setLocationStatus(''), 4000);
         } else {
-          // BROWSER/ISP REPORTED IP OUTSIDE NASHIK (e.g. telecom data center routing via Delhi 1017 km away)
-          // DO NOT force-override their selection with CBS Chowk!
-          // Alert user and offer instant 1-click lock to PVG Nashik or custom pin!
           setIsLocating(false);
           setOutsideNashikAlert({ distanceKm: distFromNashikKm });
           setLocationStatus('');
         }
       },
       (err) => {
-        console.warn('Geolocation error:', err);
         setIsLocating(false);
-        if (err.code === 1) {
-          setLocationStatus('Location permission denied. Please pick a hub or pin on map.');
-        } else if (err.code === 2) {
-          setLocationStatus('GPS hardware unavailable. Switched to high-precision hubs.');
-        } else if (err.code === 3) {
-          setLocationStatus('GPS request timed out. Please retry or pin on map.');
-        } else {
-          setLocationStatus('Could not determine current location.');
-        }
+        setLocationStatus('Could not determine current location.');
         setTimeout(() => setLocationStatus(''), 4000);
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
   };
 
-  // If corridor was chosen from Routes screen, apply its stops
   useEffect(() => {
     if (preselectedHubs) {
       if (typeof preselectedHubs.originIdx === 'number') {
@@ -223,14 +198,13 @@ export default function PoolScreen({
 
   const destHub = NASHIK_HUBS[destIndex] || NASHIK_HUBS[2];
 
-  // Upstream Shared Ride Origin: Where the vehicle is coming from with an existing co-rider
-  // Dynamic and random each time
+  // Upstream Shared Ride Origin
   const [sharedOriginSeed, setSharedOriginSeed] = useState(() => Math.floor(Math.random() * 10000));
   const sharedOriginHub = useMemo(() => {
     return getSharedRideOrigin(originHub, destHub, sharedOriginSeed);
   }, [originHub, destHub, sharedOriginSeed]);
 
-  // Real OSRM Approach Geometry: Route from shared origin to user's pickup
+  // Real OSRM Approach Geometry
   const [approachRoadRoute, setApproachRoadRoute] = useState(null);
 
   useEffect(() => {
@@ -271,19 +245,16 @@ export default function PoolScreen({
     return getAccurateDistance(sharedOriginHub, originHub).km;
   }, [sharedOriginHub, originHub]);
 
-  // Real OSRM Road Geometry (Google Maps-like street turn-by-turn polyline for user's trip)
+  // Real OSRM Road Geometry for User's Trip
   const [roadRoute, setRoadRoute] = useState(null);
-  const [loadingRoute, setLoadingRoute] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     async function loadRoadPath() {
-      setLoadingRoute(true);
       const res = await fetchRoadRoute(originHub, destHub);
       if (mounted && res && res.polyline) {
         setRoadRoute(res);
       }
-      setLoadingRoute(false);
     }
     loadRoadPath();
     return () => {
@@ -291,7 +262,6 @@ export default function PoolScreen({
     };
   }, [originHub, destHub]);
 
-  // Accurate road metrics calculation based on Nashik Road Matrix & OSRM
   const accurateMetrics = useMemo(() => {
     return getAccurateDistance(originHub, destHub);
   }, [originHub, destHub]);
@@ -315,14 +285,11 @@ export default function PoolScreen({
   const pooledMax = Math.round(soloFare * 0.81);
   const dynamicPoolPrice = Math.round(soloFare * 0.65);
   const pooledSavings = soloFare - dynamicPoolPrice;
-  const savingsPct = Math.round((pooledSavings / soloFare) * 100);
 
-  // Active street route polyline for Google Maps-like precision
   const activeRouteCoords = useMemo(() => {
     if (roadRoute && roadRoute.polyline && roadRoute.polyline.length > 1) {
       return roadRoute.polyline;
     }
-    // Fallback: 12 street-curved coordinates
     const coords = [];
     const steps = 12;
     for (let i = 0; i <= steps; i++) {
@@ -336,912 +303,658 @@ export default function PoolScreen({
     return coords;
   }, [originHub, destHub, roadRoute]);
 
-  // Diff polyline state for Before vs After route visualization on Leaflet
-  const [diffPolyline, setDiffPolyline] = useState(null);
-  const [diffMode, setDiffMode] = useState('after');
+  // Matching Stage Progression
+  const [progressPercent, setProgressPercent] = useState(45);
+  const [matchingStatusIdx, setMatchingStatusIdx] = useState(0);
 
-  // Zero-Trust Gate Verification State
-  const [isVerifyingGate, setIsVerifyingGate] = useState(false);
-  const [gateDecision, setGateDecision] = useState('COMMITTED');
-  const [showUspDrawer, setShowUspDrawer] = useState(true);
-
-  const handleReverifyGate = async () => {
-    setIsVerifyingGate(true);
-    const res = await runDispatch('hybrid');
-    setTimeout(() => {
-      setGateDecision(res && res.plans && res.plans.length > 0 ? 'COMMITTED' : 'COMMITTED');
-      setIsVerifyingGate(false);
-    }, 600);
-  };
-
-  // Matching window simulation and live queue count (fast dynamic 2s allocation)
-  const [batchProgress, setBatchProgress] = useState(0.2);
-  const [queueCount, setQueueCount] = useState(2);
+  const matchingStatuses = [
+    'Looking nearby...',
+    'Matching route co-riders...',
+    'Locking in your fare...',
+    'Almost there...'
+  ];
 
   useEffect(() => {
     if (poolStage !== 'matching') {
-      setBatchProgress(0.2);
+      setProgressPercent(45);
+      setMatchingStatusIdx(0);
       return;
     }
+
     const timer = setInterval(() => {
-      setBatchProgress((prev) => {
-        const next = Math.round((prev + 0.3) * 10) / 10;
-        if (next >= 2.0) {
+      setProgressPercent((prev) => {
+        const next = prev + 6;
+        if (next >= 100) {
           clearInterval(timer);
-          setPoolStage('active');
-          return 2.0;
+          setTimeout(() => setPoolStage('active'), 400);
+          return 100;
         }
+        const sIdx = Math.min(matchingStatuses.length - 1, Math.floor((next / 100) * matchingStatuses.length));
+        setMatchingStatusIdx(sIdx);
         return next;
       });
-      if (Math.random() > 0.5) {
-        setQueueCount((q) => (q === 2 ? 3 : 2));
-      }
-    }, 250);
+    }, 300);
+
     return () => clearInterval(timer);
   }, [poolStage, setPoolStage]);
 
-  // Active ride live vehicle progression & ticking ETA
-  // Since it's a shared ride, vehicle approaches along approachRouteCoords from shared origin to user pickup
+  // Active Ride Vehicle Animation
   const [vehicleIdx, setVehicleIdx] = useState(0);
-  const [etaSeconds, setEtaSeconds] = useState(120); // 2:00 ETA
-  const [currentSpeed, setCurrentSpeed] = useState(28);
   const [hasArrivedAtPickup, setHasArrivedAtPickup] = useState(false);
 
   useEffect(() => {
     if (poolStage !== 'active') {
       setVehicleIdx(0);
-      setEtaSeconds(120);
       setHasArrivedAtPickup(false);
       return;
     }
-    const timer = setInterval(() => {
-      const totalSteps = approachRouteCoords.length > 0 ? approachRouteCoords.length : 12;
-      const step = Math.max(1, Math.floor(totalSteps / 10));
 
+    const totalSteps = approachRouteCoords.length > 0 ? approachRouteCoords.length : 12;
+    const timer = setInterval(() => {
       setVehicleIdx((prev) => {
-        const next = prev + step;
+        const next = prev + 1;
         if (next >= totalSteps - 1) {
-          // Reached pickup! Stop the vehicle and do NOT loop.
           setHasArrivedAtPickup(true);
-          setEtaSeconds(0);
-          setCurrentSpeed(0);
-          clearInterval(timer);
           return totalSteps - 1;
         }
         return next;
       });
-
-      setEtaSeconds((prev) => (prev > 12 ? prev - 12 : 0));
-      setCurrentSpeed(Math.floor(28 + Math.random() * 8));
-    }, 1500);
+    }, 1200);
 
     return () => clearInterval(timer);
-  }, [poolStage, approachRouteCoords.length]);
+  }, [poolStage, approachRouteCoords]);
 
   const currentVehicleCoord = useMemo(() => {
-    if (approachRouteCoords && approachRouteCoords.length > 0) {
-      const safeIdx = Math.min(vehicleIdx, approachRouteCoords.length - 1);
+    if (approachRouteCoords.length > 1) {
+      const idx = Math.min(vehicleIdx, approachRouteCoords.length - 1);
+      const pt = approachRouteCoords[idx];
       return {
-        lat: approachRouteCoords[safeIdx][0],
-        lon: approachRouteCoords[safeIdx][1],
+        lat: pt[0],
+        lon: pt[1],
         isApproaching: !hasArrivedAtPickup,
-        label: hasArrivedAtPickup
-          ? `Vehicle V1 · Arrived at ${originHub.shortName} (Board Now)`
-          : `Vehicle V1 · En Route from ${sharedOriginHub.shortName}`
+        label: hasArrivedAtPickup ? 'Arrived at Pickup' : 'Tata Tigor EV'
       };
     }
     return {
-      lat: hasArrivedAtPickup ? originHub.lat : (sharedOriginHub ? sharedOriginHub.lat : originHub.lat),
-      lon: hasArrivedAtPickup ? originHub.lon : (sharedOriginHub ? sharedOriginHub.lon : originHub.lon),
+      lat: (originHub.lat + sharedOriginHub.lat) / 2,
+      lon: (originHub.lon + sharedOriginHub.lon) / 2,
       isApproaching: !hasArrivedAtPickup,
-      label: hasArrivedAtPickup
-        ? `Vehicle V1 · Arrived at ${originHub.shortName}`
-        : 'Vehicle V1 · Approaching Pickup'
+      label: hasArrivedAtPickup ? 'Arrived at Pickup' : 'Tata Tigor EV'
     };
-  }, [approachRouteCoords, vehicleIdx, hasArrivedAtPickup, sharedOriginHub, originHub]);
+  }, [approachRouteCoords, vehicleIdx, hasArrivedAtPickup, originHub, sharedOriginHub]);
 
-  const formatEta = (secs) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m}:${s < 10 ? '0' : ''}${s} ETA`;
-  };
-
-  // Cancel button two-phase confirmation
-  const [cancelText, setCancelText] = useState('Cancel Ride');
+  // Cancel flow with confirmation state
   const [cancelIsConfirm, setCancelIsConfirm] = useState(false);
 
   const handleActiveCancel = () => {
     if (!cancelIsConfirm) {
-      setCancelText('Confirm Cancellation?');
       setCancelIsConfirm(true);
-      setTimeout(() => {
-        setCancelText('Cancel Ride');
-        setCancelIsConfirm(false);
-      }, 4000);
+      setTimeout(() => setCancelIsConfirm(false), 3500);
     } else {
-      setCancelText('Ride Aborted');
-      setTimeout(() => {
-        setCancelText('Cancel Ride');
-        setCancelIsConfirm(false);
-        setPoolStage('request');
-        if (onCancelRide) onCancelRide();
-      }, 1200);
+      setCancelIsConfirm(false);
+      setPoolStage('request');
+      if (onCancelRide) onCancelRide();
     }
   };
 
   return (
-    <div className="flex flex-col w-full text-on-surface select-none pb-4">
+    <div className="flex-1 flex flex-col w-full px-4 pt-1 pb-6 max-w-md mx-auto select-none">
       {/* ─────────────────────────────────────────────────────────────
           STAGE 1: REQUEST A RIDE
       ───────────────────────────────────────────────────────────── */}
       {poolStage === 'request' && (
-        <div className="flex flex-col w-full">
-          {/* Top Sub-Bar */}
-          <div className="w-full flex items-center justify-between px-4 py-2 relative">
-            <span className="font-label-mono text-label-mono text-outline uppercase tracking-wider">
-              CORRIDOR SELECT
-            </span>
-            <span className="px-2 py-0.5 rounded bg-primary-container/20 text-primary font-label-mono text-[10px] font-semibold">
-              OSRM LIVE
-            </span>
-          </div>
-
-          {/* Location Input Sequence */}
-          <div className="px-4 pt-1 pb-3 flex flex-col gap-2">
-            {/* Out-of-Nashik ISP Alert Banner with 1-click PVG lock */}
-            {outsideNashikAlert && (
-              <div className="bg-[#F3F2EF] border border-[#DCDAD4] p-3 rounded-xl flex flex-col gap-2.5 shadow-sm animate-fade-in">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[17px] text-[#52584A]">near_me_disabled</span>
-                    <span className="font-mono text-xs font-bold text-on-surface">
-                      ISP Geolocation ({outsideNashikAlert.distanceKm} km away)
-                    </span>
-                  </div>
-                  <button 
-                    type="button"
-                    onClick={() => setOutsideNashikAlert(null)}
-                    className="text-on-surface-variant hover:text-on-surface text-xs font-bold cursor-pointer p-0.5"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <p className="text-[11px] text-on-surface-variant leading-relaxed">
-                  Your network IP resolved outside Nashik. If you are currently at <strong>PVG Nashik Campus</strong>, lock your exact spot below:
-                </p>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={selectPvgAsPickup}
-                    className="px-3 py-1.5 rounded-lg bg-[#52584A] text-[#FAF9F6] text-xs font-bold font-mono flex items-center gap-1.5 hover:bg-[#3D4236] transition-all cursor-pointer shadow-xs"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
-                    <span>📍 Lock PVG Nashik (Campus)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const idx = NASHIK_HUBS.findIndex(h => h.id === 'college_rd');
-                      if (idx !== -1) setOriginIndex(idx);
-                      setUseLiveLocation(false);
-                      setOutsideNashikAlert(null);
-                    }}
-                    className="px-2.5 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-medium cursor-pointer transition-all border border-surface-container-highest/60"
-                  >
-                    🎓 College Rd
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const idx = NASHIK_HUBS.findIndex(h => h.id === 'cbs');
-                      if (idx !== -1) setOriginIndex(idx);
-                      setUseLiveLocation(false);
-                      setOutsideNashikAlert(null);
-                    }}
-                    className="px-2.5 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-medium cursor-pointer transition-all border border-surface-container-highest/60"
-                  >
-                    🏛️ CBS Chowk
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="relative flex flex-col gap-2 bg-surface-container-low p-2.5 rounded-xl border border-surface-container-high/60 shadow-md">
-              {/* Origin Node */}
-              <div className="relative flex items-center h-12 bg-surface-container-high rounded-lg px-3 transition-all">
-                <div className="w-3 flex justify-center items-center mr-3 shrink-0 z-10">
-                  <div className="w-2.5 h-2.5 rounded-full bg-primary-container shadow-[0_0_10px_#0ed4a8]"></div>
-                </div>
-
-                {useLiveLocation && liveLocation ? (
-                  <div className="flex items-center justify-between flex-1 min-w-0 pr-1">
-                    <div className="flex flex-col min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-[#0ED4A8] animate-pulse"></span>
-                        <span className="text-on-surface font-body-md text-sm font-bold truncate">
-                          {liveLocation.shortName}
-                        </span>
-                      </div>
-                      <span className="font-label-mono text-[9.5px] text-outline truncate">
-                        GPS: {liveLocation.lat.toFixed(4)}, {liveLocation.lon.toFixed(4)} (±{liveLocation.accuracy}m)
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSearchModalType('pickup');
-                          setSearchQuery('');
-                        }}
-                        className="font-label-mono text-[10px] text-primary hover:underline font-semibold cursor-pointer whitespace-nowrap"
-                      >
-                        Search
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setUseLiveLocation(false)}
-                        className="font-label-mono text-[10px] text-outline hover:text-on-surface font-semibold cursor-pointer whitespace-nowrap"
-                      >
-                        Presets
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <select
-                        value={originIndex}
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
-                          setOriginIndex(val);
-                          localStorage.setItem('pooliq_preferred_hub', NASHIK_HUBS[val]?.id || 'cbs');
-                        }}
-                        className="bg-transparent text-on-surface font-body-md text-sm font-semibold focus:outline-none cursor-pointer"
-                      >
-                        {NASHIK_HUBS.map((hub, idx) => (
-                          <option key={hub.id} value={idx} className="bg-surface-container text-on-surface">
-                            {hub.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearchModalType('pickup');
-                        setSearchQuery('');
-                      }}
-                      className="p-1 rounded hover:bg-surface-container-highest text-on-surface-variant hover:text-on-surface transition-all cursor-pointer mr-1"
-                      title="Search all Nashik hubs"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">search</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleFetchLiveLocation}
-                      disabled={isLocating}
-                      className="px-2 py-1 rounded bg-[#E5E8DF] hover:bg-[#DCDAD4] text-[#292B29] font-mono text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all shrink-0 ml-1"
-                      title="Fetch live location via GPS"
-                    >
-                      <span className={`material-symbols-outlined text-[13px] text-[#52584A] ${isLocating ? 'animate-spin' : ''}`}>
-                        {isLocating ? 'progress_activity' : 'near_me'}
-                      </span>
-                      <span>{isLocating ? 'Locating...' : 'Use Live GPS'}</span>
-                    </button>
-                  </>
-                )}
-
-                <span className="font-label-mono text-label-mono text-primary uppercase tracking-wider text-[10px] font-bold ml-2">
-                  Pickup
+        <div className="flex flex-col w-full animate-fade-in">
+          {/* Out-of-Nashik ISP Alert Banner if IP resolved outside */}
+          {outsideNashikAlert && (
+            <div className="bg-white border border-[#EAE5DC] p-3 rounded-2xl flex flex-col gap-2 shadow-xs mb-3">
+              <div className="flex items-start justify-between">
+                <span className="text-xs font-semibold text-[#1D1D22]">
+                  Telecom IP detected outside Nashik
                 </span>
-              </div>
-
-              {locationStatus && (
-                <div className="text-[10px] font-mono text-[#52584A] bg-[#E5E8DF]/70 px-2.5 py-1 rounded-md flex items-center gap-1.5 animate-fade-in">
-                  <span className="material-symbols-outlined text-[13px]">info</span>
-                  <span>{locationStatus}</span>
-                </div>
-              )}
-
-              {/* Vertical connector line */}
-              <div className="absolute left-[30px] top-[28px] bottom-[28px] w-px bg-outline-variant z-0 pointer-events-none"></div>
-
-              {/* Destination Node */}
-              <div className="relative flex items-center h-12 bg-surface-container-high rounded-lg px-3 transition-all">
-                <div className="w-3 flex justify-center items-center mr-3 shrink-0 z-10">
-                  <div className="w-2.5 h-2.5 rounded-sm bg-on-surface shadow-[0_0_8px_#e4e1e9]"></div>
-                </div>
-                <div className="flex flex-col min-w-0 flex-1">
-                  <select
-                    value={destIndex}
-                    onChange={(e) => setDestIndex(Number(e.target.value))}
-                    className="bg-transparent text-on-surface font-body-md text-sm font-semibold focus:outline-none cursor-pointer"
-                  >
-                    {NASHIK_HUBS.map((hub, idx) => (
-                      <option key={hub.id} value={idx} className="bg-surface-container text-on-surface">
-                        {hub.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    setSearchModalType('drop');
-                    setSearchQuery('');
-                  }}
-                  className="p-1 rounded hover:bg-surface-container-highest text-on-surface-variant hover:text-on-surface transition-all cursor-pointer mr-1"
-                  title="Search destination hubs"
+                  onClick={() => setOutsideNashikAlert(null)}
+                  className="text-[#787571] hover:text-[#1D1D22] text-xs font-bold cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[16px]">search</span>
+                  ✕
                 </button>
-                <span className="font-label-mono text-label-mono text-outline uppercase tracking-wider text-[10px]">
-                  Drop
-                </span>
               </div>
-            </div>
-          </div>
-
-          {/* Location Search Modal Popover */}
-          {searchModalType && (
-            <div 
-              className="fixed inset-0 z-[1000] bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
-              onClick={() => setSearchModalType(null)}
-            >
-              <div 
-                className="bg-[#FAF9F6] w-full max-w-md rounded-2xl border border-[#DCDAD4] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="p-3 border-b border-[#E5E8DF] flex items-center justify-between bg-surface-container-lowest">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#52584A] text-[18px]">
-                      {searchModalType === 'pickup' ? 'trip_origin' : 'location_on'}
-                    </span>
-                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-on-surface">
-                      Select {searchModalType === 'pickup' ? 'Pickup Location' : 'Destination Drop'}
-                    </span>
-                  </div>
-                  <button 
-                    onClick={() => setSearchModalType(null)}
-                    className="text-on-surface-variant hover:text-on-surface text-sm font-bold p-1 cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <div className="p-3 bg-surface-container-low border-b border-[#E5E8DF]">
-                  <div className="relative flex items-center">
-                    <span className="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span>
-                    <input
-                      type="text"
-                      autoFocus
-                      placeholder="Search PVG, College Rd, Dindori, Gangapur, CBS..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 bg-surface rounded-lg text-sm text-on-surface border border-surface-container-high focus:outline-none focus:border-primary font-body-md"
-                    />
-                  </div>
-                </div>
-
-                <div className="overflow-y-auto p-2 flex flex-col gap-1 max-h-[350px]">
-                  {filteredHubs.length === 0 ? (
-                    <div className="p-6 text-center text-xs text-on-surface-variant font-mono">
-                      No matching locations found in Nashik Metro.
-                    </div>
-                  ) : (
-                    filteredHubs.map((hub) => {
-                      const isSelected = searchModalType === 'pickup'
-                        ? originHub.id === hub.id
-                        : destHub.id === hub.id;
-                      return (
-                        <button
-                          key={hub.id}
-                          onClick={() => {
-                            const hubIdx = NASHIK_HUBS.findIndex(h => h.id === hub.id);
-                            if (searchModalType === 'pickup') {
-                              if (hubIdx !== -1) setOriginIndex(hubIdx);
-                              setUseLiveLocation(false);
-                              localStorage.setItem('pooliq_preferred_hub', hub.id);
-                            } else {
-                              if (hubIdx !== -1) setDestIndex(hubIdx);
-                            }
-                            setSearchModalType(null);
-                          }}
-                          className={`w-full p-2.5 rounded-lg flex items-center justify-between text-left transition-all cursor-pointer ${
-                            isSelected
-                              ? 'bg-[#52584A] text-[#FAF9F6]'
-                              : 'hover:bg-surface-container-high text-on-surface'
-                          }`}
-                        >
-                          <div className="flex flex-col min-w-0 pr-2">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-semibold truncate">{hub.name}</span>
-                              {hub.id === 'pvg_coe' && (
-                                <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono font-bold ${
-                                  isSelected ? 'bg-white/20 text-white' : 'bg-[#10b981]/20 text-[#10b981]'
-                                }`}>
-                                  CAMPUS
-                                </span>
-                              )}
-                            </div>
-                            <span className={`text-[10px] font-mono truncate ${
-                              isSelected ? 'text-white/80' : 'text-on-surface-variant'
-                            }`}>
-                              {hub.tag || 'Transit Hub'} · {hub.lat.toFixed(4)}°N, {hub.lon.toFixed(4)}°E
-                            </span>
-                          </div>
-                          {isSelected && (
-                            <span className="material-symbols-outlined text-[16px] text-white">check</span>
-                          )}
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
+              <p className="text-[11px] text-[#787571] leading-relaxed">
+                If you are at PVG Nashik Campus, tap below to lock your exact pickup:
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={selectPvgAsPickup}
+                  className="px-3 py-1.5 rounded-full bg-[#1D1D22] text-white text-xs font-semibold hover:bg-black transition-all cursor-pointer"
+                >
+                  📍 Lock PVG Nashik
+                </button>
               </div>
             </div>
           )}
 
-          {/* Route Map Viewport with ESRI Dark Tiles and Clear Location Badges */}
-          <div className="w-full relative h-[310px] bg-surface-container-lowest overflow-hidden border-y border-surface-container-high/40">
+          {/* Pickup & Drop Input Card */}
+          <div className="bg-white rounded-[20px] p-3.5 border border-[#EAE5DC] shadow-[0_2px_12px_rgba(29,29,34,0.04)] mb-4">
+            <div className="relative flex flex-col gap-2">
+              {/* Connecting Line */}
+              <div className="absolute left-[17px] top-[26px] bottom-[26px] w-[2px] bg-[#EAE5DC] z-0 pointer-events-none"></div>
+
+              {/* Pickup Node */}
+              <div
+                onClick={() => {
+                  setSearchModalType('pickup');
+                  setSearchQuery('');
+                }}
+                className="relative flex items-center bg-[#F4EFEB] rounded-2xl px-3.5 py-3 transition-colors hover:bg-[#eee8e2] cursor-pointer"
+              >
+                <div className="w-4 flex justify-center items-center mr-3 z-10 shrink-0">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#1D1D22]"></div>
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="text-[11px] font-medium text-[#787571] uppercase tracking-wider">Pickup</span>
+                  <span className="text-[14px] font-semibold text-[#1D1D22] truncate mt-0.5">
+                    {originHub.name || originHub.shortName}
+                  </span>
+                </div>
+                <span className="text-[12px] font-medium text-[#787571] px-2.5 py-0.5 bg-white/80 rounded-full border border-[#EAE5DC]">
+                  {useLiveLocation ? 'GPS' : 'Current'}
+                </span>
+              </div>
+
+              {/* Destination Node */}
+              <div
+                onClick={() => {
+                  setSearchModalType('drop');
+                  setSearchQuery('');
+                }}
+                className="relative flex items-center bg-[#F4EFEB] rounded-2xl px-3.5 py-3 transition-colors hover:bg-[#eee8e2] cursor-pointer"
+              >
+                <div className="w-4 flex justify-center items-center mr-3 z-10 shrink-0">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#F5C451] ring-2 ring-[#F5C451]/30"></div>
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="text-[11px] font-medium text-[#787571] uppercase tracking-wider">Drop-off</span>
+                  <span className="text-[14px] font-semibold text-[#1D1D22] truncate mt-0.5">
+                    {destHub.name || destHub.shortName}
+                  </span>
+                </div>
+                <span className="material-symbols-outlined text-[18px] text-[#787571] pr-1">edit_location</span>
+              </div>
+            </div>
+
+            {locationStatus && (
+              <div className="mt-2 text-[11px] font-medium text-[#1D1D22] bg-[#FAF7F2] px-3 py-1.5 rounded-xl border border-[#EAE5DC] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[14px] text-[#F5C451]">info</span>
+                <span>{locationStatus}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Map Viewport */}
+          <div className="w-full relative h-[240px] rounded-[20px] overflow-hidden border border-[#EAE5DC] shadow-[0_2px_12px_rgba(29,29,34,0.04)] bg-[#EDE9E1] mb-4">
             <LeafletMap
               center={[originHub.lat, originHub.lon]}
               pickup={originHub}
               drop={destHub}
               routeCoords={activeRouteCoords}
-              diffPolyline={diffPolyline}
-              diffMode={diffMode}
-              height="310px"
+              height="240px"
               onMapClick={handleMapClick}
             />
-            {/* Interactive Tap Guide */}
-            <div className="absolute bottom-2 left-3 bg-[#FAF9F6]/95 backdrop-blur-md px-2.5 py-1 rounded-md border border-[#DCDAD4] shadow-xs z-[400] flex items-center gap-1.5 pointer-events-none">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#52584A] animate-pulse"></span>
-              <span className="font-mono text-[9px] text-[#292B29] font-bold uppercase tracking-wider">
-                Tap anywhere on map to pin custom pickup
+            {/* Floating Trip Chip */}
+            <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full border border-[#EAE5DC] shadow-sm flex items-center gap-2 z-[400] pointer-events-none">
+              <span className="w-2 h-2 rounded-full bg-[#1D1D22]"></span>
+              <span className="text-[12px] font-semibold text-[#1D1D22]">
+                {tripDistance} km · Fastest route
               </span>
             </div>
           </div>
 
-          {/* Trip Metric & Summary Card */}
-          <div className="px-4 -mt-3 z-10">
-            <div className="bg-surface-container p-4 rounded-2xl flex flex-col gap-3 shadow-2xl border border-surface-container-high/80">
-              <div className="flex items-center justify-between pb-1">
-                <span className="font-label-mono text-label-mono text-outline uppercase tracking-wider font-semibold">
-                  TRIP SUMMARY
-                </span>
-                <span className="font-label-mono text-[10px] text-primary-container bg-surface-container-highest px-2 py-0.5 rounded font-bold">
-                  HIGH MATCH PROBABILITY
-                </span>
-              </div>
-
-              {/* Data Rows */}
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-body-md text-body-md text-on-surface-variant">Distance</span>
-                  <span className="font-body-md text-body-md text-on-surface font-semibold">{tripDistance} km</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-body-md text-body-md text-on-surface-variant">Est. Time</span>
-                  <span className="font-body-md text-body-md text-on-surface font-semibold">{estTimeMin}:00</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-body-md text-body-md text-on-surface-variant">Solo Fare</span>
-                  <span className="font-body-md text-body-md text-on-surface font-medium">₹{soloFare}</span>
-                </div>
-                <div className="flex items-center justify-between pt-0.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-body-md text-body-md text-primary font-medium">Pooled Est.</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                  </div>
-                  <span className="font-headline-md text-headline-md text-primary font-bold">
-                    ₹{pooledMin}–{pooledMax}
-                  </span>
+          {/* Generous Bottom Summary Card */}
+          <div className="bg-white rounded-[24px] p-5 border border-[#EAE5DC] shadow-[0_4px_20px_rgba(29,29,34,0.06)] flex flex-col">
+            {/* Distance & Duration Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-[#EAE5DC]">
+              <div>
+                <span className="text-[12px] font-medium text-[#787571] uppercase tracking-wide">Trip Details</span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[16px] font-semibold text-[#1D1D22]">{tripDistance} km</span>
+                  <span className="text-[#787571]">•</span>
+                  <span className="text-[16px] font-semibold text-[#1D1D22]">~{estTimeMin} mins</span>
                 </div>
               </div>
-
-              <div className="w-full h-px bg-surface-variant my-0.5"></div>
-
-              <div className="flex items-center justify-between">
-                <span className="font-label-mono text-[11px] text-outline leading-tight">
-                  Savings depend on matched riders
-                </span>
-                <span className="font-label-mono text-[11px] text-on-surface-variant">
-                  Max 2 Pickups
-                </span>
+              <div className="px-2.5 py-1 rounded-full bg-[#F5C451]/20 text-[#1D1D22] text-[12px] font-semibold border border-[#F5C451]/40 flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">local_fire_department</span>
+                <span>Save ~25%</span>
               </div>
-
-              {/* Primary Action Button */}
-              <button
-                id="request-pool-btn"
-                onClick={() => {
-                  const freshSeed = Math.floor(Math.random() * 10000);
-                  setSharedOriginSeed(freshSeed);
-                  const freshSharedOrigin = getSharedRideOrigin(originHub, destHub, freshSeed);
-                  setPoolStage('matching');
-                  if (onRequestRide) onRequestRide({ origin: originHub, dest: destHub, sharedOrigin: freshSharedOrigin, soloFare, pooledFare: dynamicPoolPrice });
-                }}
-                className="w-full h-12 bg-primary-container hover:bg-primary active:scale-[0.99] text-on-primary font-body-md text-body-md font-semibold rounded-lg flex items-center justify-center transition-all cursor-pointer shadow-lg shadow-primary-container/20 mt-1"
-              >
-                Request Pooled Ride
-              </button>
             </div>
+
+            {/* Fare Comparison Options */}
+            <div className="pt-4 pb-2 flex flex-col gap-2.5">
+              {/* Pooled Ride Option (Selected) */}
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F4EFEB] border-2 border-[#1D1D22] transition-all">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#1D1D22] text-[#F5C451] flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-[22px]">group</span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[14px] font-bold text-[#1D1D22]">Pooled Ride</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#F5C451]"></span>
+                    </div>
+                    <span className="text-[12px] text-[#787571]">Max 2 pickups on route</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[17px] font-bold text-[#1D1D22]">₹{pooledMin}–{pooledMax}</div>
+                  <span className="text-[11px] text-[#787571] line-through">₹{soloFare}</span>
+                </div>
+              </div>
+
+              {/* Solo Ride Option (Reference) */}
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-white border border-[#EAE5DC] opacity-75 hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#F4EFEB] text-[#787571] flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-[20px]">person</span>
+                  </div>
+                  <div>
+                    <span className="text-[14px] font-semibold text-[#1D1D22]">Solo Direct</span>
+                    <div className="text-[12px] text-[#787571]">No stops · Direct drop</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-[15px] font-semibold text-[#1D1D22]">₹{soloFare}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Helper Notice */}
+            <p className="text-[12px] text-[#787571] text-center my-3">
+              Fair pricing based on active co-passengers. Never detours &gt; 4 mins.
+            </p>
+
+            {/* Primary Action CTA */}
+            <button
+              id="request-pool-btn"
+              onClick={() => {
+                const freshSeed = Math.floor(Math.random() * 10000);
+                setSharedOriginSeed(freshSeed);
+                const freshSharedOrigin = getSharedRideOrigin(originHub, destHub, freshSeed);
+                setPoolStage('matching');
+                if (onRequestRide) {
+                  onRequestRide({
+                    origin: originHub,
+                    dest: destHub,
+                    sharedOrigin: freshSharedOrigin,
+                    soloFare,
+                    pooledFare: dynamicPoolPrice
+                  });
+                }
+              }}
+              className="w-full h-13 py-3.5 bg-[#1D1D22] hover:bg-black active:scale-[0.98] text-white font-semibold text-[15px] rounded-full shadow-[0_4px_14px_rgba(29,29,34,0.18)] transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Confirm Pooled Ride</span>
+              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </button>
           </div>
         </div>
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          STAGE 2: MATCHING QUEUE
+          STAGE 2: MATCHING / FINDING YOUR POOL RIDE
       ───────────────────────────────────────────────────────────── */}
       {poolStage === 'matching' && (
-        <div className="flex flex-col w-full">
-          {/* Sub-bar */}
-          <div className="px-4 py-2 flex items-center justify-between bg-surface-container-lowest border-b border-surface-container-high/40">
-            <div className="flex items-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-              <span className="font-label-mono text-label-mono uppercase tracking-wider text-on-surface-variant">
-                Batch Engine v2.4 · Shared Pool
-              </span>
-            </div>
-            <span className="font-label-mono text-label-mono text-primary font-semibold">
-              SYNC ACTIVE
-            </span>
-          </div>
-
-          {/* Radar Telemetry Map with clean tiles and permanent location badge */}
-          <div className="relative w-full h-[320px] bg-surface-container-lowest overflow-hidden border-b border-surface-container-high/40">
+        <div className="flex flex-col w-full animate-fade-in">
+          {/* Clean Map Region */}
+          <div className="relative w-full h-[250px] rounded-[20px] overflow-hidden border border-[#EAE5DC] shadow-[0_2px_12px_rgba(29,29,34,0.04)] bg-[#EDE9E1] mb-4">
             <LeafletMap
               center={[originHub.lat, originHub.lon]}
-              sharedOrigin={sharedOriginHub}
-              approachRouteCoords={approachRouteCoords}
               pickup={originHub}
               drop={destHub}
-              showRadar={true}
-              radarCoords={[originHub.lat, originHub.lon]}
-              searchRadiusMeters={1500}
-              height="320px"
+              sharedOrigin={sharedOriginHub}
+              approachRouteCoords={approachRouteCoords}
+              height="250px"
             />
-            {/* Tactical Tag */}
-            <div className="absolute top-3 left-4 flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high/90 backdrop-blur-md border border-surface-container-highest/40 z-20 pointer-events-none">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-              <span className="font-label-mono text-[10px] tracking-wider uppercase text-on-surface font-semibold">
-                APPROACH: {sharedOriginHub.shortName} ➔ {originHub.shortName} ({approachDistanceKm} km)
-              </span>
-            </div>
-            <div className="absolute top-3 right-4 flex gap-1 z-20 pointer-events-none">
-              <div className="px-2 py-1 bg-surface-container-high/90 rounded border border-surface-container-highest/40 backdrop-blur-sm">
-                <span className="font-label-mono text-[10px] text-on-surface-variant uppercase">Diameter:</span>
-                <span className="font-label-mono text-[10px] text-primary font-semibold ml-1">0–1.5 km</span>
-              </div>
-              <div className="px-2 py-1 bg-surface-container-high/90 rounded border border-surface-container-highest/40 backdrop-blur-sm">
-                <span className="font-label-mono text-[10px] text-on-surface-variant uppercase">Inbound:</span>
-                <span className="font-label-mono text-[10px] text-on-surface font-semibold ml-1">{approachDistanceKm} km</span>
+            {/* Friendly Corner Badge */}
+            <div className="absolute top-3 left-3 z-[400] pointer-events-none">
+              <div className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-full border border-[#EAE5DC] shadow-sm flex items-center gap-1.5 text-xs text-[#787571] font-semibold">
+                <span className="material-symbols-outlined text-[14px] text-[#F5C451]">schedule</span>
+                <span>Pickup in ~4 mins</span>
               </div>
             </div>
           </div>
 
-          {/* Operational Card Panel */}
-          <div className="relative z-10 -mt-5 px-4 pb-4 flex flex-col gap-3">
-            <div className="w-full bg-surface-container p-4 rounded-2xl shadow-2xl flex flex-col gap-3 border border-surface-container-high">
-              {/* Batch countdown progress bar */}
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-wider">
-                    Dynamic Batch Allocation
-                  </span>
-                  <span className="font-label-mono text-label-mono text-primary font-semibold">
-                    {batchProgress.toFixed(1)}s / 2.0s
-                  </span>
+          {/* Main White Primary Card */}
+          <div className="bg-white rounded-[24px] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-[#EAE5DC] flex flex-col">
+            {/* Header & Status */}
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 bg-[#FAF7F2] text-[#787571] px-2.5 py-1 rounded-full text-[11px] font-medium mb-2 border border-[#EAE5DC]">
+                  <span className="material-symbols-outlined text-[13px] text-[#1D1D22]">group</span>
+                  <span>Shared Ride Pool</span>
                 </div>
-                <div className="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary transition-all duration-200 ease-out"
-                    style={{ width: `${Math.min(100, (batchProgress / 2.0) * 100)}%` }}
-                  ></div>
-                </div>
+                <h2 className="text-[20px] font-bold text-[#1D1D22] tracking-tight leading-tight">
+                  Finding your pool ride
+                </h2>
+                <p className="text-[13px] text-[#787571] mt-1">
+                  Matching you with co-riders along your route
+                </p>
               </div>
-
-              {/* State & Telemetry */}
-              <div className="flex flex-col gap-0.5">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-headline-md text-headline-md text-on-surface font-semibold">
-                    Matching with shared co-riders
-                  </h2>
-                  <div className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                    <span className="font-label-mono text-label-mono text-primary font-bold">LIVE</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-body-sm text-body-sm text-on-surface-variant">
-                    Merging path from {sharedOriginHub.shortName}
-                  </span>
-                  <span className="text-on-surface-variant text-[10px]">•</span>
-                  <span className="font-label-mono text-label-mono text-primary font-semibold">
-                    {queueCount} riders in pool
-                  </span>
-                </div>
-              </div>
-
-              <div className="w-full h-px bg-surface-variant"></div>
-
-              {/* Waypoints timeline: 3 stops representing shared ride */}
-              <div className="flex items-start gap-3 py-1">
-                <div className="flex flex-col items-center mt-1">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#38bdf8] flex items-center justify-center"></div>
-                  <div className="w-[1px] h-6 bg-surface-variant my-0.5"></div>
-                  <div className="w-2.5 h-2.5 rounded-full bg-primary flex items-center justify-center"></div>
-                  <div className="w-[1px] h-6 bg-surface-variant my-0.5"></div>
-                  <div className="w-2 h-2 rounded-none bg-on-surface"></div>
-                </div>
-                <div className="flex flex-col gap-2 flex-1 min-w-0">
-                  <div className="flex items-center justify-between min-w-0">
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-label-mono text-[9px] uppercase tracking-wider text-[#38bdf8] font-bold">
-                        1. Inbound Co-Rider
-                      </span>
-                      <span className="font-body-md text-xs text-on-surface font-medium truncate">
-                        {sharedOriginHub.shortName}
-                      </span>
-                    </div>
-                    <span className="font-label-mono text-[10px] text-on-surface-variant">Boarded</span>
-                  </div>
-                  <div className="flex items-center justify-between min-w-0">
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-label-mono text-[9px] uppercase tracking-wider text-primary font-bold">
-                        2. Your Pickup
-                      </span>
-                      <span className="font-body-md text-xs text-on-surface font-bold truncate">
-                        {originHub.shortName}
-                      </span>
-                    </div>
-                    <span className="font-label-mono text-[10px] text-primary font-semibold">Next Stop</span>
-                  </div>
-                  <div className="flex items-center justify-between min-w-0">
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-label-mono text-[9px] uppercase tracking-wider text-on-surface-variant font-bold">
-                        3. Dropoff
-                      </span>
-                      <span className="font-body-md text-xs text-on-surface font-medium truncate">
-                        {destHub.shortName}
-                      </span>
-                    </div>
-                    <span className="font-label-mono text-[10px] text-on-surface-variant">{tripDistance} km</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="w-full h-px bg-surface-variant"></div>
-
-              {/* Economics Module */}
-              <div className="flex items-center justify-between bg-surface-container-low px-3 py-2 rounded-lg border border-surface-container-high/60">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-[22px]">savings</span>
-                  <div className="flex flex-col">
-                    <span className="font-label-mono text-[10px] uppercase tracking-wider text-on-surface-variant">
-                      Pool Economy
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-body-sm text-body-sm text-on-surface-variant">Est. Solo</span>
-                      <span className="font-body-sm text-body-sm text-on-surface-variant line-through font-mono">₹{soloFare}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end">
-                  <span className="font-label-mono text-[10px] uppercase text-primary tracking-wide">Dynamic Pool</span>
-                  <span className="font-headline-md text-headline-md text-primary font-semibold font-mono">₹{dynamicPoolPrice}</span>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-2 pt-1">
-                <button
-                  onClick={() => setPoolStage('active')}
-                  className="flex-1 h-11 rounded-lg bg-primary text-on-primary font-body-md font-semibold hover:bg-primary-container transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-primary/20"
-                >
-                  <span className="material-symbols-outlined text-[18px]">verified</span>
-                  <span>Confirm Match</span>
-                </button>
-                <button
-                  id="cancel-btn"
-                  onClick={() => {
-                    setPoolStage('request');
-                    if (onCancelRide) onCancelRide();
-                  }}
-                  className="px-4 h-11 rounded-lg bg-surface-container-high text-on-surface font-label-lg uppercase tracking-wider hover:bg-surface-variant transition-colors flex items-center justify-center gap-1 cursor-pointer border border-surface-container-highest/60"
-                >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
-                  <span>Cancel</span>
-                </button>
+              <div className="w-11 h-11 rounded-full bg-[#FAF7F2] border border-[#EAE5DC] flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined text-[#1D1D22] text-[22px] animate-pulse">
+                  directions_car
+                </span>
               </div>
             </div>
+
+            {/* Humanist Progress Bar */}
+            <div className="mb-4 bg-[#F4EFEB] p-3 rounded-2xl border border-[#EAE5DC]">
+              <div className="flex items-center justify-between text-xs font-medium mb-2">
+                <span className="text-[#787571]">Optimizing route match</span>
+                <span className="text-[#1D1D22] font-semibold">
+                  {matchingStatuses[matchingStatusIdx]}
+                </span>
+              </div>
+              <div className="w-full h-2 bg-[#EAE5DC] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#F5C451] rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${progressPercent}%` }}
+                ></div>
+              </div>
+            </div>
+
+            {/* Route Itinerary Section */}
+            <div className="py-3 px-1 border-t border-b border-[#F0ECE4] flex items-stretch gap-3.5">
+              <div className="flex flex-col items-center py-1 flex-shrink-0">
+                <div className="w-3 h-3 rounded-full bg-[#1D1D22] flex items-center justify-center">
+                  <div className="w-1 h-1 rounded-full bg-white"></div>
+                </div>
+                <div className="w-[1.5px] flex-1 bg-[#EAE5DC] my-1"></div>
+                <div className="w-3 h-3 rounded-[3px] bg-[#F5C451]"></div>
+              </div>
+              <div className="flex-1 flex flex-col justify-between gap-3 text-sm">
+                <div className="flex items-baseline justify-between">
+                  <div>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#787571] block">Pickup point</span>
+                    <span className="text-[14px] font-semibold text-[#1D1D22]">{originHub.shortName}</span>
+                  </div>
+                  <span className="text-xs text-[#787571]">Pickup stop</span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <div>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#787571] block">Destination</span>
+                    <span className="text-[14px] font-semibold text-[#1D1D22]">{destHub.shortName}</span>
+                  </div>
+                  <span className="text-xs font-medium text-[#787571]">{tripDistance} km</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Fare Breakdown Pill */}
+            <div className="mt-4 bg-[#F4EFEB] rounded-2xl p-3.5 border border-[#EAE5DC] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-[#F5C451]/30 flex items-center justify-center text-[#1D1D22]">
+                  <span className="material-symbols-outlined text-[18px]">payments</span>
+                </div>
+                <div>
+                  <span className="text-xs font-semibold text-[#1D1D22] block">Shared Fare</span>
+                  <span className="text-[11px] text-[#787571]">
+                    Standard solo was <span className="line-through">₹{soloFare}</span>
+                  </span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="inline-flex items-center gap-1 bg-[#1D1D22] text-white text-[13px] font-bold px-3 py-1 rounded-full shadow-sm">
+                  ₹{dynamicPoolPrice}
+                </span>
+              </div>
+            </div>
+
+            {/* Cancel Button */}
+            <button
+              id="cancel-btn"
+              onClick={() => {
+                setPoolStage('request');
+                if (onCancelRide) onCancelRide();
+              }}
+              className="mt-4 w-full h-[50px] rounded-full bg-[#1D1D22] text-white font-medium text-[14px] tracking-tight hover:bg-black active:scale-[0.99] transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">close</span>
+              <span>Cancel Request</span>
+            </button>
+          </div>
+
+          <div className="text-center px-4 py-2 mt-1">
+            <p className="text-xs text-[#787571]">You won't be charged if you cancel before matching</p>
           </div>
         </div>
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          STAGE 3: ACTIVE RIDE TRACKING
+          STAGE 3: ACTIVE RIDE
       ───────────────────────────────────────────────────────────── */}
       {poolStage === 'active' && (
-        <div className="flex flex-col w-full">
-          {/* Real-time Map Area with Moving Vehicle Marker & Permanent Badges */}
-          <div className="relative w-full h-[330px] bg-surface-container-lowest overflow-hidden border-b border-surface-container-high/40">
+        <div className="flex flex-col w-full animate-fade-in">
+          {/* Map Viewport with Moving Vehicle */}
+          <div className="relative w-full h-[280px] rounded-[20px] overflow-hidden border border-[#EAE5DC] shadow-[0_2px_12px_rgba(29,29,34,0.04)] bg-[#EDE9E1] mb-4">
             <LeafletMap
               center={[currentVehicleCoord.lat, currentVehicleCoord.lon]}
-              sharedOrigin={sharedOriginHub}
-              approachRouteCoords={approachRouteCoords}
               pickup={originHub}
               drop={destHub}
+              sharedOrigin={sharedOriginHub}
+              approachRouteCoords={approachRouteCoords}
               routeCoords={activeRouteCoords}
               vehicleCoord={currentVehicleCoord}
-              height="330px"
+              height="280px"
             />
-            {/* Real-time Tags */}
-            <div className="absolute top-3 left-4 flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-lowest/90 backdrop-blur-md border border-surface-container-high/60 z-20 pointer-events-none">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-              <span className="font-label-mono text-label-mono text-primary uppercase tracking-wider font-semibold">
-                LIVE TELEMETRY · {currentSpeed} KM/H
-              </span>
-            </div>
-            <div className="absolute top-3 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded bg-sky-950/80 backdrop-blur-md border border-sky-400/40 z-20 pointer-events-none">
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
-              <span className="font-label-mono text-[10px] text-sky-200 uppercase font-semibold">
-                DIAMETER: 0–1.5 KM ({approachDistanceKm} KM)
-              </span>
-            </div>
-            <div className="absolute bottom-3 left-4 max-w-[calc(100%-2rem)] px-2.5 py-1 rounded bg-surface-container-high/90 backdrop-blur-md border border-surface-container-highest/40 z-20 pointer-events-none truncate">
-              <span className="font-label-mono text-[10px] text-on-surface uppercase font-semibold truncate block">
-                {sharedOriginHub.shortName} ➔ {originHub.shortName} ➔ {destHub.shortName}
-              </span>
+            {/* Quick floating ETA Pill */}
+            <div className="absolute top-3 left-3 z-[400] pointer-events-none">
+              <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full border border-[#EAE5DC] shadow-sm flex items-center gap-1.5 text-xs text-[#1D1D22] font-semibold">
+                <span className="material-symbols-outlined text-[15px] text-[#F5C451]">schedule</span>
+                <span>{hasArrivedAtPickup ? 'Arrived at Pickup' : 'Arriving in ~2 mins'}</span>
+              </div>
             </div>
           </div>
 
-          {/* Floating Operational Card */}
-          <div className="relative z-30 px-4 -mt-4">
-            <div className="w-full bg-surface-container rounded-2xl p-4 shadow-2xl flex flex-col gap-3.5 border border-surface-container-high">
-              {/* Top Row: Arrival & Dynamic ETA */}
+          {/* Floating Pure White Ride Card */}
+          <div className="bg-white rounded-[24px] p-5 shadow-[0_8px_30px_rgba(29,29,34,0.06)] border border-[#EAE5DC] flex flex-col gap-4">
+            {/* Driver & Vehicle Information Row */}
+            <div className="flex items-center justify-between pb-3.5 border-b border-[#F0ECE4]">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border border-[#EAE5DC] bg-[#FAF7F2] flex items-center justify-center font-bold text-sm text-[#1D1D22]">
+                    RP
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 bg-white border border-[#EAE5DC] rounded-full px-1 py-0.2 flex items-center gap-0.5 text-[10px] font-bold text-[#1D1D22] shadow-xs">
+                    <span className="material-symbols-outlined text-[11px] text-[#F5C451]">star</span>
+                    4.9
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="text-[15px] font-bold text-[#1D1D22]">Ramesh Patil</h3>
+                    <span className="text-xs text-[#787571]">• Tata Tigor EV</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[11px] font-semibold text-[#1D1D22] bg-[#F4EFEB] px-2 py-0.5 rounded tracking-wide border border-[#EAE5DC]">
+                      MH 15 AB 4821
+                    </span>
+                    <span className="text-xs text-[#787571]">
+                      {hasArrivedAtPickup ? 'Ready for boarding' : 'Arriving in 2 mins'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href="tel:9876543210"
+                  aria-label="Call driver"
+                  className="w-9 h-9 rounded-full bg-[#FAF7F2] border border-[#EAE5DC] flex items-center justify-center text-[#1D1D22] hover:bg-[#F4EFEB] transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">call</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Key Trip Metrics */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="bg-[#FAF7F2] p-3 rounded-2xl border border-[#EAE5DC] flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-white border border-[#EAE5DC] flex items-center justify-center text-[#1D1D22] shrink-0">
+                  <span className="material-symbols-outlined text-[18px]">hourglass_top</span>
+                </div>
+                <div>
+                  <span className="text-[11px] font-medium text-[#787571] uppercase tracking-wider block">Pickup Wait</span>
+                  <span className="text-[14px] font-bold text-[#1D1D22]">
+                    {hasArrivedAtPickup ? 'Board Now' : '~2 mins'}
+                  </span>
+                </div>
+              </div>
+              <div className="bg-[#FAF7F2] p-3 rounded-2xl border border-[#EAE5DC] flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-white border border-[#EAE5DC] flex items-center justify-center text-[#1D1D22] shrink-0">
+                  <span className="material-symbols-outlined text-[18px]">group</span>
+                </div>
+                <div>
+                  <span className="text-[11px] font-medium text-[#787571] uppercase tracking-wider block">Co-riders</span>
+                  <span className="text-[14px] font-bold text-[#1D1D22]">1 Matched</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Clean Fare Comparison Section */}
+            <div className="bg-[#FAF7F2] rounded-2xl p-3.5 border border-[#EAE5DC] flex flex-col gap-2.5">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${hasArrivedAtPickup ? 'bg-primary' : 'bg-primary animate-pulse'}`}></span>
-                  <div className="flex flex-col">
-                    <span className="font-body-lg text-body-md text-on-surface font-semibold">
-                      {hasArrivedAtPickup
-                        ? `Vehicle ${assignedVehicle ? assignedVehicle.id : 'V1'} Arrived at Pickup!`
-                        : `Vehicle ${assignedVehicle ? assignedVehicle.id : 'V1'} arriving`}
-                    </span>
-                    <span className="text-[11px] font-mono text-primary font-medium">
-                      {hasArrivedAtPickup
-                        ? `Arrived from ${sharedOriginHub.shortName} (${approachDistanceKm} km · within 1.5 km diameter) · Ready for boarding with Co-rider 1`
-                        : `Shared Pool · Inbound from ${sharedOriginHub.shortName} (${approachDistanceKm} km · within 1.5 km diameter)`}
-                    </span>
+                <span className="text-[12px] font-semibold text-[#787571] uppercase tracking-wide">Fare Comparison</span>
+                <span className="inline-flex items-center gap-1 bg-[#F5C451] text-[#1D1D22] text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                  <span className="material-symbols-outlined text-[13px]">savings</span>
+                  You saved ₹{pooledSavings}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 pt-0.5">
+                {/* Pooled Fare (Active) */}
+                <div className="flex-1 bg-white rounded-xl p-2.5 border-2 border-[#1D1D22] flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-semibold text-[#787571] block">Pooled Fare</span>
+                    <span className="text-[16px] font-bold text-[#1D1D22]">₹{dynamicPoolPrice}</span>
                   </div>
+                  <span className="material-symbols-outlined text-[18px] text-[#F5C451]">check_circle</span>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <div className="px-2.5 py-0.5 rounded bg-surface-container-high border border-surface-container-highest/60">
-                    <span className="font-label-mono text-label-mono text-primary font-semibold tracking-wider">
-                      {hasArrivedAtPickup ? 'ARRIVED · BOARD NOW' : formatEta(etaSeconds)}
-                    </span>
+                {/* Solo Standard Fare (Reference) */}
+                <div className="flex-1 bg-white/60 rounded-xl p-2.5 border border-[#EAE5DC] flex items-center justify-between opacity-80">
+                  <div>
+                    <span className="text-[11px] font-medium text-[#787571] block">Solo Direct</span>
+                    <span className="text-[15px] font-semibold text-[#787571] line-through">₹{soloFare}</span>
                   </div>
-                  {hasArrivedAtPickup && (
-                    <button
-                      onClick={() => {
-                        setVehicleIdx(0);
-                        setEtaSeconds(90);
-                        setHasArrivedAtPickup(false);
-                      }}
-                      className="p-1 rounded bg-surface-container-high hover:bg-surface-container-highest text-primary font-mono text-[10px] cursor-pointer"
-                      title="Replay vehicle approach"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">replay</span>
-                    </button>
-                  )}
+                  <span className="text-[10px] font-medium text-[#787571]">Baseline</span>
                 </div>
               </div>
+            </div>
 
-              <div className="w-full h-px bg-surface-variant"></div>
-
-              {/* Assigned Verified Woman Pilot Card */}
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-container-low border border-surface-container-high/60">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs font-mono">
-                    PD
-                  </div>
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-on-surface">Pooja Deshmukh</span>
-                      <span className="px-1.5 py-0.2 rounded-full bg-primary/20 text-primary font-mono text-[9px] font-semibold">
-                        Women-Verified Pilot
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-mono text-on-surface-variant">
-                      Tata Tiago EV · IN-MH15-4109 · 4.95 ★
-                    </span>
-                  </div>
-                </div>
-                <span className="material-symbols-outlined text-[18px] text-primary">verified</span>
-              </div>
-
-              {/* Stat Columns: Detour, Wait, Riders */}
-              <div className="grid grid-cols-3 gap-2 text-center py-1 bg-surface-container-low rounded-xl p-2 border border-surface-container-high/40">
-                <div className="flex flex-col items-center">
-                  <span className="font-headline-md text-headline-md text-primary font-semibold tracking-tight">
-                    +2.1 min
-                  </span>
-                  <span className="font-label-mono text-label-mono text-outline uppercase tracking-wider mt-0.5 text-[10px]">
-                    Detour Time
-                  </span>
-                </div>
-                <div className="flex flex-col items-center border-x border-surface-variant">
-                  <span className="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight">
-                    1:30
-                  </span>
-                  <span className="font-label-mono text-label-mono text-outline uppercase tracking-wider mt-0.5 text-[10px]">
-                    Wait
-                  </span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight text-primary">
-                    2
-                  </span>
-                  <span className="font-label-mono text-label-mono text-outline uppercase tracking-wider mt-0.5 text-[10px]">
-                    Riders
-                  </span>
-                </div>
-              </div>
-
-              {/* Fare Optimization & Comparison Section */}
-              <div className="flex flex-col gap-2 bg-surface-container-low p-3 rounded-xl border border-surface-container-high/60">
-                <div className="flex items-center justify-between">
-                  <span className="font-label-mono text-label-mono uppercase tracking-wider text-outline font-semibold">
-                    Your Fare
-                  </span>
-                  <span className="font-label-mono text-label-mono text-primary font-medium tracking-wide">
-                    SAVINGS APPLIED
-                  </span>
-                </div>
-
-                {/* Proportional Cost Comparison Bars */}
-                <div className="flex items-center gap-2 w-full pt-0.5">
-                  <div className="flex-1 flex flex-col gap-1">
-                    <div className="h-8 rounded-lg bg-surface-container-high px-2.5 flex items-center justify-between border border-surface-container-highest/40">
-                      <span className="font-label-mono text-label-mono uppercase text-on-surface-variant tracking-wider">
-                        Solo
-                      </span>
-                      <span className="font-body-md text-body-md text-secondary font-medium">₹{soloFare}</span>
-                    </div>
-                  </div>
-                  <div className="flex-[0.77] flex flex-col gap-1">
-                    <div className="h-8 rounded-lg bg-primary px-2.5 flex items-center justify-between shadow-md shadow-primary/20">
-                      <span className="font-label-mono text-label-mono uppercase text-on-primary font-semibold tracking-wider">
-                        Pooled
-                      </span>
-                      <span className="font-body-md text-body-md text-on-primary font-semibold">₹{dynamicPoolPrice}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-1">
-                  <span className="font-body-sm text-body-sm text-primary font-medium">
-                    You save ₹{pooledSavings} ({savingsPct}%)
-                  </span>
-                  <span className="font-label-mono text-label-mono text-on-surface-variant text-[10px]">
-                    CO2 ↓ 410g
-                  </span>
-                </div>
-              </div>
-
-              {/* Primary Action Button */}
+            {/* Primary Action: Cancel Ride Button */}
+            <div className="pt-1">
               <button
                 id="cancel-active-btn"
                 onClick={handleActiveCancel}
-                className={`w-full py-3 rounded-lg font-body-md text-body-md font-medium text-center transition-all cursor-pointer ${
+                className={`w-full h-12 rounded-full border transition-all flex items-center justify-center gap-1.5 shadow-sm font-semibold text-[14px] cursor-pointer ${
                   cancelIsConfirm
-                    ? 'bg-error-container text-on-error-container shadow-md shadow-error-container/40'
-                    : 'bg-primary hover:bg-primary-fixed-dim active:bg-primary-container text-on-primary'
+                    ? 'bg-red-50 border-red-300 text-red-600'
+                    : 'border-[#EAE5DC] bg-white text-[#1D1D22] hover:bg-[#FAF7F2]'
                 }`}
               >
-                {cancelText}
+                <span className="material-symbols-outlined text-[17px] text-[#787571]">
+                  {cancelIsConfirm ? 'warning' : 'close'}
+                </span>
+                <span>{cancelIsConfirm ? 'Confirm Cancellation?' : 'Cancel Ride'}</span>
               </button>
+            </div>
+          </div>
+
+          <div className="text-center pt-2.5">
+            <p className="text-[11px] text-[#787571]">Free cancellation within 3 minutes of vehicle dispatch</p>
+          </div>
+        </div>
+      )}
+
+      {/* Hub Location Search Popover */}
+      {searchModalType && (
+        <div 
+          className="fixed inset-0 z-[1200] bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setSearchModalType(null)}
+        >
+          <div 
+            className="bg-white w-full max-w-md rounded-[24px] border border-[#EAE5DC] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-[#EAE5DC] flex items-center justify-between">
+              <span className="text-sm font-bold text-[#1D1D22]">
+                Select {searchModalType === 'pickup' ? 'Pickup Location' : 'Drop-off Destination'}
+              </span>
+              <button 
+                onClick={() => setSearchModalType(null)}
+                className="text-[#787571] hover:text-[#1D1D22] text-sm font-bold p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-3 bg-[#FAF7F2] border-b border-[#EAE5DC]">
+              <div className="relative flex items-center">
+                <span className="material-symbols-outlined absolute left-3 text-[#787571] text-[18px]">search</span>
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="Search CBS, College Rd, PVG, Gangapur..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-white rounded-xl text-sm text-[#1D1D22] border border-[#EAE5DC] focus:outline-none focus:border-[#1D1D22] font-body-md"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-y-auto p-2 flex flex-col gap-1 max-h-[350px]">
+              {filteredHubs.map((hub) => {
+                const isSelected = searchModalType === 'pickup'
+                  ? originHub.id === hub.id
+                  : destHub.id === hub.id;
+                return (
+                  <button
+                    key={hub.id}
+                    onClick={() => {
+                      const hubIdx = NASHIK_HUBS.findIndex(h => h.id === hub.id);
+                      if (searchModalType === 'pickup') {
+                        if (hubIdx !== -1) setOriginIndex(hubIdx);
+                        setUseLiveLocation(false);
+                        localStorage.setItem('pooliq_preferred_hub', hub.id);
+                      } else {
+                        if (hubIdx !== -1) setDestIndex(hubIdx);
+                      }
+                      setSearchModalType(null);
+                    }}
+                    className={`w-full p-3 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#1D1D22] text-white'
+                        : 'hover:bg-[#F4EFEB] text-[#1D1D22]'
+                    }`}
+                  >
+                    <div className="flex flex-col min-w-0 pr-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold truncate">{hub.name}</span>
+                        {hub.id === 'pvg_coe' && (
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
+                            isSelected ? 'bg-white/20 text-white' : 'bg-[#F5C451] text-[#1D1D22]'
+                          }`}>
+                            CAMPUS
+                          </span>
+                        )}
+                      </div>
+                      <span className={`text-[10px] truncate ${isSelected ? 'text-white/80' : 'text-[#787571]'}`}>
+                        {hub.tag || 'Nashik Corridor'}
+                      </span>
+                    </div>
+                    {isSelected && (
+                      <span className="material-symbols-outlined text-[16px] text-[#F5C451]">check_circle</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

@@ -1,32 +1,25 @@
 import React from 'react';
 
 /**
- * USP 1 — ZERO-TRUST ROUTE GATE
- * "THE OPTIMIZER PROPOSES. AN INDEPENDENT VALIDATOR DECIDES."
- *
- * Visualizes the strict independent validation barrier that sits between
- * the route optimizer (candidate route) and the production committed route.
+ * USP 1 — Independent Route Verification
+ * Ensures candidate routes strictly satisfy capacity, precedence, SLA wait times, and detour caps.
  */
 export default function ZeroTrustGate({
   plan = null,
   validation = null,
-  decision = 'COMMITTED', // 'COMMITTED' | 'DEFERRED' | 'REJECTED' | 'EVALUATING'
+  decision = 'COMMITTED', // 'COMMITTED' | 'DEFERRED' | 'REJECTED'
   isEvaluating = false,
   onRunValidation = null
 }) {
-  // Extract real backend validation report properties
   const report = validation || (plan && plan.validation) || null;
-  const isOk = report ? report.ok : decision === 'COMMITTED';
   const violations = report && report.violations ? report.violations : [];
 
-  // Check individual criteria from backend report
   const hasCapacityViolation = violations.some(v => v.toLowerCase().includes('capacity'));
   const hasPrecedenceViolation = violations.some(v => v.toLowerCase().includes('precedence'));
   const hasWindowViolation = violations.some(v => v.toLowerCase().includes('window') || v.toLowerCase().includes('wait'));
   const hasDetourViolation = violations.some(v => v.toLowerCase().includes('detour'));
   const hasPhysicalViolation = violations.some(v => v.toLowerCase().includes('speed') || v.toLowerCase().includes('feasibility'));
 
-  // Extract detour percentage from per_rider metrics if available
   let maxDetourPct = 0;
   if (report && report.per_rider) {
     const riders = Object.values(report.per_rider);
@@ -38,193 +31,157 @@ export default function ZeroTrustGate({
   const criteria = [
     {
       id: 'capacity',
-      name: 'Capacity Constraint',
-      sub: 'Max 4 passengers seated',
+      name: 'Capacity Bound',
+      sub: 'Maximum 4 seated riders',
       passed: !hasCapacityViolation,
-      detail: hasCapacityViolation ? 'Over capacity' : '≤ 4 Seats Allocated'
+      detail: hasCapacityViolation ? 'Over capacity' : 'Up to 4 seats allocated'
     },
     {
       id: 'precedence',
-      name: 'Precedence Order',
+      name: 'Stop Precedence',
       sub: 'Pickup precedes drop-off',
       passed: !hasPrecedenceViolation,
-      detail: hasPrecedenceViolation ? 'Drop before pickup' : 'Strict Chronology Valid'
+      detail: hasPrecedenceViolation ? 'Drop precedes pickup' : 'Correct chronology verified'
     },
     {
       id: 'window',
       name: 'Pickup Window SLA',
-      sub: 'Wait time ≤ 480 seconds',
+      sub: 'Max wait time within 8 mins',
       passed: !hasWindowViolation,
-      detail: hasWindowViolation ? 'SLA deadline exceeded' : 'Within Service Window'
+      detail: hasWindowViolation ? 'SLA exceeded' : 'Within service window'
     },
     {
       id: 'detour',
-      name: 'Detour Cap ≤ 15%',
+      name: 'Detour Cap (≤ 15%)',
       sub: 'Guaranteed fairness bound',
       passed: !hasDetourViolation,
-      detail: `${maxDetourPct > 0 ? maxDetourPct.toFixed(1) : '5.1'}% Max Detour`
+      detail: `${maxDetourPct > 0 ? maxDetourPct.toFixed(1) : '5.1'}% max detour`
     },
     {
       id: 'physical',
-      name: 'Physical Feasibility',
-      sub: 'Road network & max speed',
+      name: 'Kinematic Feasibility',
+      sub: 'Valid road network speed',
       passed: !hasPhysicalViolation,
-      detail: hasPhysicalViolation ? 'Speed / road mismatch' : 'Kinematic Bounds Verified'
+      detail: hasPhysicalViolation ? 'Speed mismatch' : 'Kinematics verified'
     }
   ];
 
-  return (
-    <div className="w-full rounded-2xl bg-surface-container-low border border-primary/30 shadow-2xl p-4 md:p-5 flex flex-col gap-4 relative overflow-hidden transition-all">
-      {/* Background glow indicating gate status */}
-      <div
-        className={`absolute -right-16 -top-16 w-48 h-48 rounded-full blur-3xl pointer-events-none transition-all duration-700 ${
-          decision === 'COMMITTED'
-            ? 'bg-primary/10'
-            : decision === 'DEFERRED'
-            ? 'bg-amber-500/10'
-            : 'bg-rose-500/10'
-        }`}
-      />
+  const isCommitted = decision === 'COMMITTED';
 
-      {/* Top Banner: Core USP Slogan */}
-      <div className="flex flex-col gap-1 border-b border-surface-container-high/80 pb-3">
+  return (
+    <div className="w-full rounded-2xl bg-white border border-[#EAE5DC] shadow-sm p-5 flex flex-col gap-4 text-[#1D1D22]">
+      {/* Top Banner */}
+      <div className="flex flex-col gap-1 border-b border-[#F0EBE1] pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
-            <span className="font-label-mono text-[11px] font-bold text-primary uppercase tracking-widest">
-              USP 1 · Independent Route Verification
+            <span className="w-2 h-2 rounded-full bg-[#10B981]" />
+            <span className="text-xs font-semibold text-[#10B981]">
+              Independent Route Verification
             </span>
           </div>
-          <span className="px-2 py-0.5 rounded bg-surface-container-high text-outline font-label-mono text-[10px] uppercase">
-            OR-Tools + Validator
+          <span className="px-2.5 py-0.5 rounded-full bg-[#FAF7F2] border border-[#EAE5DC] text-[11px] text-[#787571] font-medium">
+            OR-Tools Validator
           </span>
         </div>
-        <h2 className="font-headline-md text-base md:text-lg font-bold text-on-surface tracking-tight mt-0.5">
-          “THE OPTIMIZER PROPOSES. AN INDEPENDENT VALIDATOR DECIDES.”
+        <h2 className="text-base font-bold text-[#1D1D22] mt-0.5">
+          Route Safety and Invariant Gate
         </h2>
-        <p className="font-body-sm text-xs text-on-surface-variant">
-          Candidate routes generated by dispatch heuristics are strictly quarantined until verified against zero-trust physical &amp; SLA bounds.
+        <p className="text-xs text-[#787571] leading-relaxed">
+          Every candidate route proposed by the dispatch engine is independently evaluated against physical constraints and rider SLA guarantees before being committed.
         </p>
       </div>
 
-      {/* Flow Architecture: Candidate -> Zero-Trust Gate -> Decision */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 items-center">
-        {/* Step 1: Optimizer Candidate Route */}
-        <div className="flex flex-col p-3 rounded-xl bg-surface-container border border-surface-container-high">
-          <div className="flex items-center justify-between">
-            <span className="font-label-mono text-[10px] text-outline uppercase font-semibold">
-              Step 1 · Dispatch Proposal
-            </span>
-            <span className="material-symbols-outlined text-[16px] text-tertiary-fixed-dim">
-              alt_route
-            </span>
-          </div>
-          <span className="font-label-lg text-xs font-semibold text-on-surface mt-1">
-            Candidate Route Plan
+      {/* Step Flow */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+        {/* Step 1: Proposal */}
+        <div className="p-3.5 rounded-xl bg-[#FAF7F2] border border-[#EAE5DC] flex flex-col">
+          <span className="text-[11px] text-[#787571] font-semibold">1. Dispatch Proposal</span>
+          <span className="text-xs font-bold text-[#1D1D22] mt-0.5">
+            {plan && plan.stops ? `${plan.stops.length} Stops Candidate` : 'Batch Insertion Candidate'}
           </span>
-          <span className="font-label-mono text-[11px] text-on-surface-variant mt-0.5">
-            {plan && plan.stops ? `${plan.stops.length} Waypoints Proposed` : 'Batch Insertion Sequence'}
+          <span className="text-[11px] text-[#787571] mt-1">
+            Vehicle {plan?.vehicle_id || 'V1'} · Version #{plan?.version || 1}
           </span>
-          <div className="mt-2 text-[10px] font-label-mono text-outline">
-            Vehicle: {plan?.vehicle_id || 'V1'} · Version: #{plan?.version || 1}
+        </div>
+
+        {/* Step 2: Gate */}
+        <div className="flex items-center justify-center">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF7F2] border border-[#EAE5DC] text-xs font-semibold text-[#1D1D22]">
+            <span className="material-symbols-outlined text-[16px] text-[#10B981]">verified_user</span>
+            <span>Zero-Trust Validation</span>
           </div>
         </div>
 
-        {/* Arrow / Gate Connector */}
-        <div className="flex items-center justify-center py-1 md:py-0">
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high/90 border border-primary/40 text-primary">
-            <span className="material-symbols-outlined text-[16px] animate-pulse">
-              shield
-            </span>
-            <span className="font-label-mono text-[10px] uppercase font-bold tracking-wider">
-              Zero-Trust Gate
-            </span>
-            <span className="material-symbols-outlined text-[14px]">
-              arrow_forward
-            </span>
-          </div>
-        </div>
-
-        {/* Step 3: Dominant Decision Badge */}
+        {/* Step 3: Verdict */}
         <div
-          className={`flex flex-col items-center justify-center p-3.5 rounded-xl border transition-all ${
-            decision === 'COMMITTED'
-              ? 'bg-primary-container/20 border-primary text-primary shadow-lg shadow-primary/10'
-              : decision === 'DEFERRED'
-              ? 'bg-amber-500/15 border-amber-500 text-amber-400'
-              : 'bg-rose-500/15 border-rose-500 text-rose-400'
+          className={`p-3.5 rounded-xl border flex flex-col items-center justify-center text-center ${
+            isCommitted
+              ? 'bg-[#ECFDF5] border-[#A7F3D0] text-[#065F46]'
+              : 'bg-[#FFFBEB] border-[#FDE68A] text-[#92400E]'
           }`}
         >
-          <span className="font-label-mono text-[10px] uppercase font-bold tracking-widest text-outline">
-            Gate Verdict
+          <span className="text-[10px] font-bold uppercase tracking-wider opacity-75">
+            Validation Verdict
           </span>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="material-symbols-outlined text-[24px]">
-              {decision === 'COMMITTED' ? 'check_circle' : decision === 'DEFERRED' ? 'hourglass_top' : 'cancel'}
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="material-symbols-outlined text-[18px]">
+              {isCommitted ? 'check_circle' : 'hourglass_top'}
             </span>
-            <span className="font-headline-lg text-lg font-black tracking-wider uppercase">
+            <span className="text-sm font-bold tracking-tight">
               {decision}
             </span>
           </div>
-          <span className="font-label-mono text-[10px] mt-0.5 opacity-80">
-            {decision === 'COMMITTED'
-              ? 'Passed all 5 independent invariant checks'
-              : decision === 'DEFERRED'
-              ? 'Held for next batch window re-optimization'
-              : 'Rejected: Invariant violation'}
+          <span className="text-[11px] mt-0.5 opacity-90">
+            {isCommitted ? 'All 5 invariant checks passed' : 'Queued for re-optimization'}
           </span>
         </div>
       </div>
 
-      {/* Five Individual Criteria Verification Grid */}
+      {/* 5 Invariant Checks */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <span className="font-label-mono text-[11px] uppercase tracking-wider text-outline font-semibold">
-            Independent Invariant Checks ({criteria.filter(c => c.passed).length}/5 Passed)
+          <span className="text-xs font-bold text-[#1D1D22]">
+            Invariant Checks ({criteria.filter(c => c.passed).length}/5 Passed)
           </span>
           {onRunValidation && (
             <button
               onClick={onRunValidation}
               disabled={isEvaluating}
-              className="text-[11px] font-label-mono text-primary hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+              className="text-xs font-semibold text-[#1D1D22] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
             >
-              <span>{isEvaluating ? 'Auditing...' : 'Re-verify Gate'}</span>
-              <span className="material-symbols-outlined text-[13px]">verified</span>
+              <span>{isEvaluating ? 'Checking...' : 'Re-verify Gate'}</span>
+              <span className="material-symbols-outlined text-[14px]">refresh</span>
             </button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {criteria.map((crit) => (
             <div
               key={crit.id}
-              className={`flex items-start justify-between p-2.5 rounded-lg border transition-all ${
-                crit.passed
-                  ? 'bg-surface-container/70 border-surface-container-high/80'
-                  : 'bg-rose-500/10 border-rose-500/40 text-rose-300'
-              }`}
+              className="flex items-center justify-between p-3 rounded-xl bg-[#FAF7F2] border border-[#EAE5DC]"
             >
               <div className="flex flex-col min-w-0 pr-2">
-                <span className="font-label-md text-xs font-semibold text-on-surface truncate">
+                <span className="text-xs font-bold text-[#1D1D22] truncate">
                   {crit.name}
                 </span>
-                <span className="font-body-sm text-[10px] text-outline truncate">
+                <span className="text-[11px] text-[#787571] truncate">
                   {crit.sub}
                 </span>
-                <span className={`font-label-mono text-[10px] mt-1 font-semibold ${crit.passed ? 'text-primary' : 'text-rose-400'}`}>
+                <span className="text-[11px] text-[#059669] font-medium mt-0.5">
                   {crit.detail}
                 </span>
               </div>
-              <div className="shrink-0 pt-0.5">
+              <div className="shrink-0">
                 {crit.passed ? (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/20 text-primary font-label-mono text-[10px] font-bold">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] text-[11px] font-semibold">
                     <span className="material-symbols-outlined text-[13px]">check</span>
-                    PASS
+                    Pass
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-label-mono text-[10px] font-bold">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B] text-[11px] font-semibold">
                     <span className="material-symbols-outlined text-[13px]">close</span>
-                    FAIL
+                    Fail
                   </span>
                 )}
               </div>
@@ -233,18 +190,10 @@ export default function ZeroTrustGate({
         </div>
       </div>
 
-      {/* Violation Banner if failed */}
       {violations.length > 0 && (
-        <div className="p-3 rounded-lg bg-rose-500/15 border border-rose-500/50 flex items-start gap-2 text-rose-300">
-          <span className="material-symbols-outlined text-[18px] text-rose-400 shrink-0">
-            error
-          </span>
-          <div className="flex flex-col text-xs">
-            <span className="font-semibold uppercase tracking-wider font-label-mono">
-              Validator Veto Raised:
-            </span>
-            <span className="mt-0.5">{violations.join('; ')}</span>
-          </div>
+        <div className="p-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-xs text-[#991B1B]">
+          <strong className="block font-semibold">Validation Violations:</strong>
+          <span className="mt-0.5 block">{violations.join('; ')}</span>
         </div>
       )}
     </div>

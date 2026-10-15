@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 /**
- * poolIQ Header with Muted Aesthetic & Profile Role Switcher (Passenger vs Admin)
+ * PoolIQ Header — Warm Humanist Interface
+ * Designed with tactile reassurance, clean geometry, and elegant role switching.
  */
 export default function Header({
-  title = "pool-IQ",
+  title = "PoolIQ",
   showBack = false,
   onBack = null,
   onTuneClick = null,
@@ -31,55 +32,56 @@ export default function Header({
   };
 
   return (
-    <header className="fixed top-0 inset-x-0 z-[1100] bg-[#FAF9F6]/90 backdrop-blur-md border-b border-[#DCDAD4] shadow-xs pt-safe">
+    <header className="fixed top-0 inset-x-0 z-[1100] bg-[#FAF7F2]/90 backdrop-blur-md border-b border-[#EAE5DC]/80 shadow-xs pt-safe transition-colors">
       <div className="h-14 px-4 flex items-center justify-between max-w-5xl mx-auto">
         {/* Brand & Left Navigation */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           {showBack && (
             <button
               onClick={onBack}
-              className="w-8 h-8 -ml-1 mr-1 flex items-center justify-center rounded-xl text-[#292B29] hover:bg-[#EAE8E3] transition-colors cursor-pointer"
+              className="w-9 h-9 -ml-1 rounded-full bg-white border border-[#EAE5DC] shadow-xs flex items-center justify-center text-[#1D1D22] hover:bg-[#F4EFEB] active:scale-95 transition-all cursor-pointer"
               aria-label="Back"
             >
-              <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+              <span className="material-symbols-outlined text-[19px]">arrow_back</span>
             </button>
           )}
 
-          <div className="flex items-center gap-2">
-            <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-[#EAE8E3] text-[#52584A] border border-[#DCDAD4]">
-              <span className="material-symbols-outlined text-[19px]">route</span>
-            </span>
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-sans font-bold text-base tracking-tight text-[#292B29]">
-                pool-IQ
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-[#1D1D22] text-[#F5C451] flex items-center justify-center font-bold text-sm shadow-sm select-none">
+              P
+            </div>
+            <div className="flex flex-col">
+              <span className="font-sans font-bold text-[15px] tracking-tight text-[#1D1D22] leading-none">
+                PoolIQ
               </span>
-              <span className="text-[10px] font-mono tracking-wider uppercase text-[#898B84] hidden sm:inline">
-                {userRole === 'admin' ? 'Dispatcher Pro' : 'Urban Pooling'}
+              <span className="text-[11px] font-medium text-[#787571] mt-0.5">
+                {title !== 'PoolIQ' && title !== 'pool-IQ' ? title : (userRole === 'admin' ? 'Dispatch Console' : 'Ride Pooling')}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Right Controls: Role Badge, Engine Status, Tune & Profile */}
-        <div className="flex items-center gap-2.5">
-          {/* Active Mode Pill */}
-          <span className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider border ${
-            userRole === 'admin'
-              ? 'bg-[#30312F] text-[#F6F5F1] border-[#424440]'
-              : 'bg-[#E5E8DF] text-[#343B30] border-[#DCDAD4]'
-          }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${userRole === 'admin' ? 'bg-[#858C7B]' : 'bg-[#52584A] animate-pulse'}`}></span>
-            {userRole === 'admin' ? 'Admin Console' : 'Passenger Mode'}
-          </span>
+        {/* Right Controls: Live Beacon, Engine Tune & Profile */}
+        <div className="flex items-center gap-2">
+          {/* Live Status Pill */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-[#EAE5DC] shadow-xs">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F5C451] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F5C451]"></span>
+            </span>
+            <span className="text-[11.5px] font-semibold text-[#1D1D22]">
+              {userRole === 'admin' ? 'Live Fleet' : 'Live'}
+            </span>
+          </div>
 
           {/* Operator Engine Controls button (Only in admin mode or if clicked) */}
           {onTuneClick && userRole === 'admin' && (
             <button
               onClick={onTuneClick}
-              className="w-8 h-8 flex items-center justify-center rounded-xl text-[#292B29] hover:bg-[#EAE8E3] border border-[#DCDAD4] transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-full bg-white border border-[#EAE5DC] shadow-xs flex items-center justify-center text-[#1D1D22] hover:bg-[#F4EFEB] transition-colors cursor-pointer"
               title="Engine Controls & Zero-Trust Gate"
             >
-              <span className="material-symbols-outlined text-[18px]">tune</span>
+              <span className="material-symbols-outlined text-[17px]">tune</span>
             </button>
           )}
 
@@ -87,89 +89,90 @@ export default function Header({
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center gap-1.5 p-1 rounded-xl hover:bg-[#EAE8E3] border border-transparent hover:border-[#DCDAD4] transition-all cursor-pointer"
+              className="flex items-center gap-1 p-0.5 rounded-full hover:bg-white/80 border border-transparent hover:border-[#EAE5DC] transition-all cursor-pointer"
               title="Account & Role Switcher"
               id="profile-role-switcher"
             >
-              <div className="w-8 h-8 rounded-xl bg-[#858C7B] text-white flex items-center justify-center shadow-xs text-xs font-bold">
+              <div className="w-8 h-8 rounded-full bg-[#1D1D22] text-white flex items-center justify-center shadow-xs text-xs font-semibold border border-[#EAE5DC]">
                 NK
               </div>
-              <span className="material-symbols-outlined text-[16px] text-[#686B66]">expand_more</span>
+              <span className="material-symbols-outlined text-[16px] text-[#787571]">expand_more</span>
             </button>
 
             {/* Profile Popover / Role Switcher Menu */}
             {showProfileMenu && (
               <>
-                {/* Fullscreen Backdrop so tap anywhere closes popover and dims background */}
                 <div
-                  className="fixed inset-0 z-[1101] bg-black/30 backdrop-blur-[1px] animate-fade-in"
+                  className="fixed inset-0 z-[1101] bg-black/20 backdrop-blur-[1px] animate-fade-in"
                   onClick={() => setShowProfileMenu(false)}
                 />
-                <div className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] bg-[#FAF9F6] rounded-2xl p-3 shadow-2xl border border-[#DCDAD4] z-[1102] animate-fade-in flex flex-col gap-3">
+                <div className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] bg-white rounded-2xl p-3.5 shadow-[0_12px_36px_rgba(29,29,34,0.12)] border border-[#EAE5DC] z-[1102] animate-fade-in flex flex-col gap-3">
                   {/* User Identity */}
-                  <div className="flex items-center gap-2.5 pb-2 border-b border-[#DCDAD4]">
-                    <div className="w-9 h-9 rounded-xl bg-[#858C7B] text-white flex items-center justify-center text-xs font-bold">
+                  <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#EAE5DC]">
+                    <div className="w-9 h-9 rounded-full bg-[#1D1D22] text-[#F5C451] flex items-center justify-center text-xs font-bold shadow-xs">
                       NK
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="text-xs font-bold text-[#292B29] truncate">Nakul Karpe</span>
-                      <span className="text-[11px] font-mono text-[#898B84] truncate">karpenakul885</span>
+                      <span className="text-[13px] font-bold text-[#1D1D22] truncate">Nakul Karpe</span>
+                      <span className="text-[11px] text-[#787571] truncate">karpenakul885@gmail.com</span>
                     </div>
                   </div>
 
                   {/* Role Switcher Section */}
                   <div className="flex flex-col gap-1.5">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#898B84] font-semibold px-1">
-                      Select Workspace Role
+                    <span className="text-[11px] font-semibold text-[#787571] px-1">
+                      Choose Mode
                     </span>
 
                     {/* Passenger Option */}
                     <button
                       onClick={() => handleRoleSelect('passenger')}
-                      className={`flex items-start gap-2.5 p-2 rounded-xl text-left transition-all cursor-pointer ${
+                      className={`flex items-start gap-2.5 p-2.5 rounded-xl text-left transition-all cursor-pointer ${
                         userRole === 'passenger'
-                          ? 'bg-[#E5E8DF] border border-[#858C7B]/40 text-[#292B29]'
-                          : 'hover:bg-[#F2EFEB] text-[#686B66]'
+                          ? 'bg-[#F4EFEB] border border-[#1D1D22] text-[#1D1D22]'
+                          : 'hover:bg-[#FAF7F2] text-[#787571]'
                       }`}
                     >
-                      <span className="material-symbols-outlined text-[18px] text-[#52584A] mt-0.5">person</span>
+                      <span className="material-symbols-outlined text-[19px] text-[#1D1D22] mt-0.5">person</span>
                       <div className="flex flex-col">
-                        <span className="text-xs font-semibold text-[#292B29]">Passenger Mode</span>
-                        <span className="text-[10.5px] text-[#898B84]">Request rides, routes &amp; active tracking</span>
+                        <span className="text-[13px] font-semibold text-[#1D1D22]">Passenger App</span>
+                        <span className="text-[11px] text-[#787571]">Request rides, route tracking &amp; fair fare splits</span>
                       </div>
                       {userRole === 'passenger' && (
-                        <span className="material-symbols-outlined text-[16px] text-[#52584A] ml-auto">check</span>
+                        <span className="material-symbols-outlined text-[17px] text-[#F5C451] ml-auto">check_circle</span>
                       )}
                     </button>
 
                     {/* Admin Option */}
                     <button
                       onClick={() => handleRoleSelect('admin')}
-                      className={`flex items-start gap-2.5 p-2 rounded-xl text-left transition-all cursor-pointer ${
+                      className={`flex items-start gap-2.5 p-2.5 rounded-xl text-left transition-all cursor-pointer ${
                         userRole === 'admin'
-                          ? 'bg-[#30312F] text-[#F6F5F1] border border-[#424440]'
-                          : 'hover:bg-[#F2EFEB] text-[#686B66]'
+                          ? 'bg-[#1D1D22] text-white border border-[#1D1D22]'
+                          : 'hover:bg-[#FAF7F2] text-[#787571]'
                       }`}
                     >
-                      <span className="material-symbols-outlined text-[18px] text-[#858C7B] mt-0.5">admin_panel_settings</span>
+                      <span className={`material-symbols-outlined text-[19px] mt-0.5 ${userRole === 'admin' ? 'text-[#F5C451]' : 'text-[#787571]'}`}>
+                        admin_panel_settings
+                      </span>
                       <div className="flex flex-col">
-                        <span className={`text-xs font-semibold ${userRole === 'admin' ? 'text-[#F6F5F1]' : 'text-[#292B29]'}`}>
-                          Admin &amp; Dispatcher
+                        <span className={`text-[13px] font-semibold ${userRole === 'admin' ? 'text-white' : 'text-[#1D1D22]'}`}>
+                          Transit Dispatcher
                         </span>
-                        <span className={`text-[10.5px] ${userRole === 'admin' ? 'text-[#A3A69D]' : 'text-[#898B84]'}`}>
-                          Fleet telemetry, stats &amp; zero-trust gate
+                        <span className={`text-[11px] ${userRole === 'admin' ? 'text-[#EAE5DC]' : 'text-[#787571]'}`}>
+                          Fleet operations, batch solver &amp; network analytics
                         </span>
                       </div>
                       {userRole === 'admin' && (
-                        <span className="material-symbols-outlined text-[16px] text-[#858C7B] ml-auto">check</span>
+                        <span className="material-symbols-outlined text-[17px] text-[#F5C451] ml-auto">check_circle</span>
                       )}
                     </button>
                   </div>
 
                   {/* Footer status */}
-                  <div className="pt-2 border-t border-[#DCDAD4] flex items-center justify-between text-[10px] font-mono text-[#898B84]">
+                  <div className="pt-2 border-t border-[#EAE5DC] flex items-center justify-between text-[11px] text-[#787571]">
                     <span>Engine: {backendStatus}</span>
-                    <span className="text-[#52584A] font-semibold">v3.2</span>
+                    <span className="text-[#1D1D22] font-semibold">Production Ready</span>
                   </div>
                 </div>
               </>

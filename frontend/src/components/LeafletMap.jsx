@@ -1,6 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 
+/**
+ * PoolIQ Leaflet Map — Warm Humanist Cartography
+ * Utilizes high-clarity daytime light canvas tiles with warm amber accents,
+ * smooth route casings, and clean tactile markers without visual noise.
+ */
 export default function LeafletMap({
   center = [19.9977, 73.7803],
   zoom = 13,
@@ -42,16 +47,15 @@ export default function LeafletMap({
         touchZoom: true
       });
 
-      // ESRI Dark Gray Canvas: 100% Free, NO API KEY, Zero Watermarks
-      // Base layer for dark background, water bodies, and road lines
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      // Esri Light Gray Canvas: Daytime clean cartography
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 16,
         subdomains: ['server', 'services'],
         attribution: 'Esri, HERE, Garmin, &copy; OpenStreetMap contributors'
       }).addTo(map);
 
-      // Reference layer: Renders crisp street names, highway labels (MH-15, NH-848), and city landmarks in clean dark contrast
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+      // Light Reference layer: Crisp road names, highways, and landmarks
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 16,
         subdomains: ['server', 'services']
       }).addTo(map);
@@ -114,7 +118,7 @@ export default function LeafletMap({
     };
 
     // ─────────────────────────────────────────────────────────────
-    // 1. CORRIDORS (Routes Mode) with permanent stop name badges
+    // 1. CORRIDORS (Routes Mode)
     // ─────────────────────────────────────────────────────────────
     if (corridors && corridors.length > 0) {
       const bounds = [];
@@ -127,47 +131,58 @@ export default function LeafletMap({
             selectedCorrBounds = corr.path;
           }
 
-          // Corridor route vector
+          // Outer casing for selected
+          if (isSelected) {
+            addLayer(
+              L.polyline(corr.path, {
+                color: '#FFFFFF',
+                weight: 7,
+                opacity: 0.95,
+                lineCap: 'round',
+                lineJoin: 'round'
+              })
+            );
+          }
+
+          // Corridor line
           addLayer(
             L.polyline(corr.path, {
-              color: isSelected ? '#0ED4A8' : (corr.color || '#38bdf8'),
-              weight: isSelected ? 6.5 : (selectedCorridorId ? 3 : 4.5),
-              opacity: isSelected ? 1.0 : (selectedCorridorId ? 0.35 : 0.9),
+              color: isSelected ? '#1D1D22' : (corr.color || '#807663'),
+              weight: isSelected ? 4 : 3,
+              opacity: isSelected ? 1.0 : 0.45,
               lineCap: 'round',
               lineJoin: 'round'
             })
           );
 
-          // Corridor stop nodes: Render full text labels ONLY for selected corridor to prevent clutter
+          // Corridor stop nodes
           corr.path.forEach((pt, idx) => {
             bounds.push(pt);
             const stopName = corr.stops && corr.stops[idx] ? corr.stops[idx] : `Stop ${idx + 1}`;
-            const badgeColor = isSelected ? '#0ED4A8' : (corr.color || '#38bdf8');
             
             if (isSelected) {
               const stopBadgeIcon = L.divIcon({
                 className: 'custom-stop-badge',
                 html: `
-                  <div style="display: flex; align-items: center; gap: 6px; pointer-events: none; z-index: 500;">
-                    <div style="width: 13px; height: 13px; border-radius: 50%; background: ${badgeColor}; border: 2px solid #131318; box-shadow: 0 0 12px ${badgeColor}; shrink: 0;"></div>
-                    <div style="background: rgba(19, 19, 24, 0.95); border: 1.5px solid ${badgeColor}; color: #e4e1e9; padding: 2px 7px; border-radius: 5px; font-family: Inter, sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; box-shadow: 0 3px 10px rgba(0,0,0,0.7); backdrop-filter: blur(4px);">
+                  <div style="display: flex; align-items: center; gap: 5px; pointer-events: none;">
+                    <div style="width: 10px; height: 10px; border-radius: 50%; background: #1D1D22; border: 2px solid #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,0.15);"></div>
+                    <div style="background: #FFFFFF; border: 1px solid #EAE5DC; color: #1D1D22; padding: 2px 7px; border-radius: 9999px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10.5px; font-weight: 600; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
                       ${stopName}
                     </div>
                   </div>
                 `,
-                iconSize: [120, 24],
-                iconAnchor: [6, 12]
+                iconSize: [110, 22],
+                iconAnchor: [5, 11]
               });
               addLayer(L.marker(pt, { icon: stopBadgeIcon }));
             } else {
-              // Minimal sleek dot for non-selected corridors: ZERO text overlap clutter!
               const dotIcon = L.divIcon({
                 className: 'custom-stop-dot',
                 html: `
-                  <div style="width: 8px; height: 8px; border-radius: 50%; background: ${badgeColor}; border: 1.5px solid #131318; opacity: 0.75; box-shadow: 0 0 6px ${badgeColor}60;"></div>
+                  <div style="width: 6px; height: 6px; border-radius: 50%; background: #807663; border: 1px solid #FFFFFF; opacity: 0.6;"></div>
                 `,
-                iconSize: [8, 8],
-                iconAnchor: [4, 4]
+                iconSize: [6, 6],
+                iconAnchor: [3, 3]
               });
               addLayer(L.marker(pt, { icon: dotIcon }));
             }
@@ -191,15 +206,11 @@ export default function LeafletMap({
         try {
           map.flyToBounds(selectedCorrBounds, { padding: [45, 45], duration: 1.0 });
         } catch (e) {}
-      } else if (bounds.length > 0 && !lastFitCorridorRef.current) {
-        try {
-          map.fitBounds(bounds, { padding: [35, 35] });
-        } catch (e) {}
       }
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 2. FLEET VEHICLES with permanent ID and location tags
+    // 2. FLEET VEHICLES
     // ─────────────────────────────────────────────────────────────
     if (fleetVehicles && fleetVehicles.length > 0) {
       const bounds = [];
@@ -215,40 +226,23 @@ export default function LeafletMap({
         }
 
         const isTransit = v.status === 'transit';
-        const isTerminal = v.status === 'terminal';
-        const markerColor = isSelected ? '#0ED4A8' : (isTransit ? '#0ED4A8' : isTerminal ? '#ffa858' : '#ffb4ab');
-
-        // Concentric pulse for selected vehicle
-        if (isSelected) {
-          addLayer(
-            L.circle([v.lat, v.lon], {
-              radius: 400,
-              color: '#0ED4A8',
-              weight: 2,
-              dashArray: '4, 4',
-              fillColor: '#0ED4A8',
-              fillOpacity: 0.15
-            })
-          );
-        }
+        const statusBg = isTransit ? '#F5C451' : '#FFFFFF';
 
         const fleetMarkerIcon = L.divIcon({
           className: 'custom-fleet-marker',
           html: `
-            <div style="display: flex; align-items: center; gap: 6px; cursor: pointer; transform: ${isSelected ? 'scale(1.15)' : 'scale(1.0)'}; transition: transform 0.2s;">
-              <div style="position: relative; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
-                <div style="position: absolute; width: 28px; height: 28px; border-radius: 50%; background: ${markerColor}30; border: 1.5px solid ${markerColor}; ${isTransit || isSelected ? 'animation: pulse 1.8s infinite;' : ''}"></div>
-                <div style="width: 17px; height: 17px; border-radius: 50%; background: ${markerColor}; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 12px ${markerColor}; font-size: 10px; font-weight: bold; color: #131318;">
-                  ${v.id}
-                </div>
+            <div style="display: flex; align-items: center; gap: 5px; cursor: pointer; transform: ${isSelected ? 'scale(1.12)' : 'scale(1.0)'}; transition: transform 0.2s;">
+              <div style="position: relative; width: 32px; height: 32px; border-radius: 50%; background: #FFFFFF; border: 1.5px solid #EAE5DC; box-shadow: 0 4px 12px rgba(29,29,34,0.1); display: flex; align-items: center; justify-content: center;">
+                <span class="material-symbols-outlined" style="font-size: 17px; color: #1D1D22;">directions_car</span>
+                <span style="position: absolute; top: -1px; right: -1px; width: 8px; height: 8px; border-radius: 50%; background: ${statusBg}; border: 1.5px solid #FFFFFF;"></span>
               </div>
-              <div style="background: rgba(19, 19, 24, 0.94); border: 1.5px solid ${isSelected ? '#0ED4A8' : '#35343a'}; color: #e4e1e9; padding: 2px 7px; border-radius: 4px; font-family: Inter, sans-serif; font-size: 10px; font-weight: 700; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.6);">
-                <span style="color: ${markerColor}; font-weight: 800;">${v.id}</span> · ${v.speed}
+              <div style="background: #FFFFFF; border: 1px solid #EAE5DC; color: #1D1D22; padding: 2px 7px; border-radius: 9999px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10px; font-weight: 700; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                ${v.id} · ${v.speed}
               </div>
             </div>
           `,
-          iconSize: [110, 30],
-          iconAnchor: [15, 15]
+          iconSize: [95, 32],
+          iconAnchor: [16, 16]
         });
 
         const m = addLayer(L.marker([v.lat, v.lon], { icon: fleetMarkerIcon }));
@@ -257,47 +251,40 @@ export default function LeafletMap({
         }
 
         m.bindPopup(`
-          <div style="background: #1f1f25; color: #e4e1e9; padding: 10px; border-radius: 8px; border: 1px solid #35343a; font-family: Inter, sans-serif; min-width: 190px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #35343a; padding-bottom: 4px; margin-bottom: 6px;">
-              <strong style="color: ${markerColor}; font-size: 13px;">Vehicle ${v.id}</strong>
-              <span style="font-size: 10px; text-transform: uppercase; background: #2a292f; padding: 2px 5px; border-radius: 4px;">${v.status}</span>
+          <div style="background: #FFFFFF; color: #1D1D22; padding: 12px; border-radius: 16px; font-family: 'Plus Jakarta Sans', sans-serif; min-width: 190px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #EAE5DC; padding-bottom: 6px; margin-bottom: 8px;">
+              <strong style="color: #1D1D22; font-size: 13px;">Vehicle ${v.id}</strong>
+              <span style="font-size: 10px; font-weight: 600; text-transform: uppercase; background: #F4EFEB; color: #787571; padding: 2px 6px; border-radius: 9999px;">${v.status}</span>
             </div>
-            <div style="font-size: 11px; color: #bacac2; line-height: 1.4;">
-              <div><strong>Model:</strong> ${v.model || 'EV'}</div>
-              <div><strong>Speed:</strong> ${v.speed || '0 km/h'}</div>
-              <div><strong>Seats:</strong> ${v.seatsOccupied || 0}/${v.seatsTotal || 4} occupied</div>
-              <div><strong>Battery:</strong> ${v.soc || '80%'}</div>
-              <div style="margin-top: 4px; color: #e4e1e9;">${v.routeVector || ''}</div>
+            <div style="font-size: 11.5px; color: #787571; line-height: 1.5;">
+              <div><strong style="color: #1D1D22;">Driver:</strong> ${v.driver || 'Assigned Driver'}</div>
+              <div><strong style="color: #1D1D22;">Speed:</strong> ${v.speed || '0 km/h'}</div>
+              <div><strong style="color: #1D1D22;">Occupancy:</strong> ${v.seatsOccupied || 0}/${v.seatsTotal || 4} seats</div>
+              <div><strong style="color: #1D1D22;">EV Battery:</strong> ${v.soc || '82%'}</div>
             </div>
           </div>
         `);
       });
 
-      if (targetVehCoord) {
-        if (lastFitVehicleRef.current !== selectedVehicleId) {
-          lastFitVehicleRef.current = selectedVehicleId;
-          try {
-            map.flyTo(targetVehCoord, 14, { duration: 1.2 });
-          } catch (e) {}
-        }
-      } else if (bounds.length > 0 && !selectedCorridorId) {
+      if (targetVehCoord && lastFitVehicleRef.current !== selectedVehicleId) {
+        lastFitVehicleRef.current = selectedVehicleId;
         try {
-          map.fitBounds(bounds, { padding: [40, 40] });
+          map.flyTo(targetVehCoord, 14, { duration: 1.0 });
         } catch (e) {}
       }
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 3. DIFF POLYLINE (BEFORE / AFTER ROUTE DIFF PREVIEW)
+    // 3. DIFF POLYLINE
     // ─────────────────────────────────────────────────────────────
     if (diffPolyline && diffPolyline.length > 1) {
       const isBefore = diffMode === 'before';
       const poly = addLayer(
         L.polyline(diffPolyline, {
-          color: isBefore ? '#9d86e9' : '#0ED4A8',
-          weight: 5.5,
+          color: isBefore ? '#787571' : '#1D1D22',
+          weight: 4.5,
           opacity: 0.95,
-          dashArray: isBefore ? '6, 8' : undefined,
+          dashArray: isBefore ? '6, 6' : undefined,
           lineCap: 'round',
           lineJoin: 'round'
         })
@@ -308,15 +295,15 @@ export default function LeafletMap({
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 3.5 APPROACH ROUTE (Vehicle Approach from Co-Rider Upstream Node)
+    // 3.5 APPROACH ROUTE (Shared Ride Leg)
     // ─────────────────────────────────────────────────────────────
     if (approachRouteCoords && approachRouteCoords.length > 1) {
       addLayer(
         L.polyline(approachRouteCoords, {
-          color: '#38bdf8',
-          weight: 4.5,
-          opacity: 0.9,
-          dashArray: '8, 6',
+          color: '#F5C451',
+          weight: 4,
+          opacity: 0.95,
+          dashArray: '6, 6',
           lineCap: 'round',
           lineJoin: 'round'
         })
@@ -324,53 +311,64 @@ export default function LeafletMap({
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 3.6 SHARED ORIGIN MARKER (Upstream Co-Rider Node)
+    // 3.6 SHARED ORIGIN MARKER
     // ─────────────────────────────────────────────────────────────
     if (sharedOrigin) {
       const sharedName = sharedOrigin.shortName || sharedOrigin.name || 'Co-Rider Stop';
       const sharedIcon = L.divIcon({
         className: 'custom-shared-node',
         html: `
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <div style="position: relative; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;">
-              <div style="width: 12px; height: 12px; border-radius: 50%; background: #38bdf8; border: 2px solid #131318; box-shadow: 0 0 10px rgba(56, 189, 248, 0.9);"></div>
+          <div style="display: flex; flex-direction: column; align-items: center; pointer-events: none;">
+            <div style="background: rgba(255,255,255,0.95); backdrop-filter: blur(4px); padding: 2px 8px; border-radius: 9999px; border: 1px solid #EAE5DC; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700; color: #1D1D22; margin-bottom: 3px; white-space: nowrap;">
+              Co-Rider 1 · ${sharedName}
             </div>
-            <div style="background: rgba(19, 19, 24, 0.94); border: 1.5px solid #38bdf8; color: #38bdf8; padding: 3px 8px; border-radius: 6px; font-family: Inter, sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.6); backdrop-filter: blur(6px);">
-              CO-RIDER 1 BOARDED: ${sharedName}
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: #F5C451; border: 2px solid #FFFFFF; box-shadow: 0 3px 8px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center;">
+              <div style="width: 6px; height: 6px; border-radius: 50%; background: #1D1D22;"></div>
             </div>
           </div>
         `,
-        iconSize: [190, 22],
-        iconAnchor: [11, 11]
+        iconSize: [160, 24],
+        iconAnchor: [80, 20]
       });
       addLayer(L.marker([sharedOrigin.lat, sharedOrigin.lon], { icon: sharedIcon }));
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 3.7 POOLING CATCHMENT PERIMETER (Min 0 km, Max 1.5 km Diameter Boundary)
+    // 3.7 POOLING CATCHMENT PERIMETER (Max 1.5 km Diameter Boundary)
     // ─────────────────────────────────────────────────────────────
     if (pickup && sharedOrigin) {
       addLayer(
         L.circle([pickup.lat, pickup.lon], {
           radius: 1500,
-          color: '#38bdf8',
+          color: '#EAE5DC',
           weight: 1.5,
-          dashArray: '5, 7',
-          fillColor: '#38bdf8',
-          fillOpacity: 0.04
+          dashArray: '5, 5',
+          fillColor: '#F5C451',
+          fillOpacity: 0.05
         })
       );
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 4. ACTIVE ROUTE / POLYLINE
+    // 4. MAIN ACTIVE ROUTE (Charcoal with White Casing)
     // ─────────────────────────────────────────────────────────────
     if (!diffPolyline && routeCoords && routeCoords.length > 1) {
+      // White casing
+      addLayer(
+        L.polyline(routeCoords, {
+          color: '#FFFFFF',
+          weight: 7,
+          opacity: 0.95,
+          lineCap: 'round',
+          lineJoin: 'round'
+        })
+      );
+      // Main route
       const poly = addLayer(
         L.polyline(routeCoords, {
-          color: '#0ED4A8',
-          weight: 5,
-          opacity: 0.95,
+          color: '#1D1D22',
+          weight: 3.5,
+          opacity: 1.0,
           lineCap: 'round',
           lineJoin: 'round'
         })
@@ -390,10 +388,10 @@ export default function LeafletMap({
     } else if (!diffPolyline && pickup && drop && (!routeCoords || routeCoords.length <= 1)) {
       const line = addLayer(
         L.polyline([[pickup.lat, pickup.lon], [drop.lat, drop.lon]], {
-          color: '#0ED4A8',
-          weight: 4,
+          color: '#1D1D22',
+          weight: 3.5,
           opacity: 0.85,
-          dashArray: '6, 8'
+          dashArray: '5, 5'
         })
       );
       try {
@@ -403,112 +401,72 @@ export default function LeafletMap({
       map.setView(center, zoom);
     }
 
-
     // ─────────────────────────────────────────────────────────────
-    // 4. PICKUP MARKER with permanent prominent location name
+    // 5. PICKUP MARKER (Solid Charcoal Circle with White Inner Dot)
     // ─────────────────────────────────────────────────────────────
     if (pickup) {
       const pickupName = pickup.shortName || pickup.name || 'Pickup';
       const pickupIcon = L.divIcon({
         className: 'custom-pickup-node',
         html: `
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <div style="position: relative; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;">
-              <div style="position: absolute; width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(14, 212, 168, 0.6); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-              <div style="position: relative; width: 12px; height: 12px; border-radius: 50%; background: #0ED4A8; box-shadow: 0 0 12px #49f1c3; border: 2px solid #131318;"></div>
+          <div style="display: flex; flex-direction: column; align-items: center; pointer-events: none;">
+            <div style="background: rgba(255,255,255,0.95); backdrop-filter: blur(4px); padding: 2.5px 8.5px; border-radius: 9999px; border: 1px solid #EAE5DC; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700; color: #1D1D22; margin-bottom: 3px; white-space: nowrap;">
+              ${pickupName}
             </div>
-            <div style="background: rgba(19, 19, 24, 0.94); border: 1.5px solid #0ED4A8; color: #49f1c3; padding: 3px 8px; border-radius: 6px; font-family: Inter, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.6); backdrop-filter: blur(6px);">
-              PICKUP: ${pickupName}
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: #1D1D22; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 10px rgba(0,0,0,0.18); display: flex; align-items: center; justify-content: center;">
+              <div style="width: 7px; height: 7px; border-radius: 50%; background: #FFFFFF;"></div>
             </div>
           </div>
         `,
-        iconSize: [160, 26],
-        iconAnchor: [13, 13]
+        iconSize: [140, 48],
+        iconAnchor: [70, 40]
       });
       addLayer(L.marker([pickup.lat, pickup.lon], { icon: pickupIcon }));
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 5. DROP MARKER with permanent prominent location name
+    // 6. DROP MARKER (Warm Golden Amber Circle with Pin Glyph)
     // ─────────────────────────────────────────────────────────────
     if (drop) {
-      const dropName = drop.shortName || drop.name || 'Drop';
+      const dropName = drop.shortName || drop.name || 'Drop-off';
       const dropIcon = L.divIcon({
         className: 'custom-drop-node',
         html: `
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <div style="position: relative; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;">
-              <div style="width: 12px; height: 12px; border-radius: 2px; background: #e4e1e9; border: 2px solid #131318; box-shadow: 0 0 10px rgba(228, 225, 233, 0.9);"></div>
+          <div style="display: flex; flex-direction: column; align-items: center; pointer-events: none;">
+            <div style="background: rgba(255,255,255,0.95); backdrop-filter: blur(4px); padding: 2.5px 8.5px; border-radius: 9999px; border: 1px solid #EAE5DC; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700; color: #1D1D22; margin-bottom: 3px; white-space: nowrap;">
+              ${dropName}
             </div>
-            <div style="background: rgba(19, 19, 24, 0.94); border: 1.5px solid #e4e1e9; color: #e4e1e9; padding: 3px 8px; border-radius: 6px; font-family: Inter, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.6); backdrop-filter: blur(6px);">
-              DROP: ${dropName}
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: #F5C451; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 10px rgba(0,0,0,0.18); display: flex; align-items: center; justify-content: center;">
+              <span class="material-symbols-outlined" style="font-size: 14px; font-weight: bold; color: #1D1D22;">location_on</span>
             </div>
           </div>
         `,
-        iconSize: [160, 22],
-        iconAnchor: [11, 11]
+        iconSize: [140, 48],
+        iconAnchor: [70, 40]
       });
       addLayer(L.marker([drop.lat, drop.lon], { icon: dropIcon }));
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 6. RADAR CONCENTRIC PULSE & RADIUS (Matching Queue)
-    // ─────────────────────────────────────────────────────────────
-    if (showRadar) {
-      const rCoord = radarCoords || (pickup ? [pickup.lat, pickup.lon] : center);
-
-      // Search Radius Circle
-      addLayer(
-        L.circle(rCoord, {
-          radius: searchRadiusMeters,
-          color: '#0ED4A8',
-          weight: 2,
-          dashArray: '5, 6',
-          fillColor: '#0ED4A8',
-          fillOpacity: 0.12
-        })
-      );
-
-      // Radar Concentric Pulse Marker
-      const radarIcon = L.divIcon({
-        className: 'radar-concentric-marker',
-        html: `
-          <div style="position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; pointer-events: none;">
-            <div style="position: absolute; width: 130px; height: 130px; border-radius: 50%; background: rgba(73, 241, 195, 0.15); border: 1.5px solid rgba(73, 241, 195, 0.4); animation: ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-            <div style="position: absolute; width: 75px; height: 75px; border-radius: 50%; background: rgba(73, 241, 195, 0.25); border: 1px solid rgba(73, 241, 195, 0.5);"></div>
-            <div style="position: relative; width: 18px; height: 18px; border-radius: 50%; background: #49f1c3; box-shadow: 0 0 18px #49f1c3; display: flex; align-items: center; justify-content: center;">
-              <div style="width: 6px; height: 6px; border-radius: 50%; background: #00382a;"></div>
-            </div>
-          </div>
-        `,
-        iconSize: [140, 140],
-        iconAnchor: [70, 70]
-      });
-      addLayer(L.marker(rCoord, { icon: radarIcon }));
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // 7. REAL-TIME VEHICLE MARKER with live badge
+    // 7. REAL-TIME VEHICLE MARKER (Clean White Circle with Amber Dot)
     // ─────────────────────────────────────────────────────────────
     if (vehicleCoord) {
-      const vehLabel = vehicleCoord.label || (vehicleCoord.isApproaching ? 'Vehicle V1 · Approaching Pickup' : 'Vehicle V1 · En Route');
+      const vehLabel = vehicleCoord.label || (vehicleCoord.isApproaching ? 'Approaching Pickup' : 'On Route');
       const vehicleIcon = L.divIcon({
         className: 'custom-vehicle-moving-node',
         html: `
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <div style="position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
-              <div style="position: absolute; width: 32px; height: 32px; border-radius: 50%; background: rgba(14, 212, 168, 0.3); animation: pulse 1.5s infinite;"></div>
-              <div style="width: 22px; height: 22px; border-radius: 50%; background: #49f1c3; border: 2px solid #131318; box-shadow: 0 0 16px #49f1c3; display: flex; align-items: center; justify-content: center;">
-                <span class="material-symbols-outlined" style="font-size: 15px; color: #00382a; font-weight: bold;">directions_car</span>
-              </div>
-            </div>
-            <div style="background: rgba(19, 19, 24, 0.94); border: 1.5px solid #0ED4A8; color: #49f1c3; padding: 3px 8px; border-radius: 6px; font-family: Inter, sans-serif; font-size: 11px; font-weight: 700; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.6); backdrop-filter: blur(6px);">
+          <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+            <div style="background: rgba(255,255,255,0.95); backdrop-filter: blur(4px); padding: 2px 7px; border-radius: 9999px; border: 1px solid #EAE5DC; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10px; font-weight: 700; color: #1D1D22; margin-bottom: 3px; white-space: nowrap;">
               ${vehLabel}
+            </div>
+            <div style="position: relative; width: 34px; height: 34px; border-radius: 50%; background: #FFFFFF; border: 1.5px solid #EAE5DC; box-shadow: 0 4px 14px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center;">
+              <span class="material-symbols-outlined" style="font-size: 18px; color: #1D1D22;">directions_car</span>
+              <span style="position: absolute; top: -1px; right: -1px; width: 9px; height: 9px; border-radius: 50%; background: #F5C451; border: 2px solid #FFFFFF;"></span>
             </div>
           </div>
         `,
-        iconSize: [180, 34],
-        iconAnchor: [17, 17]
+        iconSize: [130, 52],
+        iconAnchor: [65, 42]
       });
       addLayer(L.marker([vehicleCoord.lat, vehicleCoord.lon], { icon: vehicleIcon }));
     }
@@ -518,18 +476,8 @@ export default function LeafletMap({
   return (
     <div className={`relative w-full overflow-hidden ${className}`} style={{ height: height || '100%' }}>
       <div ref={mapContainerRef} className="w-full h-full" />
-      {/* Subtle Cartesian Grid Lines */}
-      <div className="absolute inset-0 pointer-events-none opacity-15">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="cartesian-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#bacac2" strokeWidth="0.5" strokeDasharray="1 3" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#cartesian-grid)" />
-        </svg>
-      </div>
-      {/* Map Content Container */}
+      {/* Warm Ambient Map Vignette */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#FAF7F2]/30 via-transparent to-[#FAF7F2]/80 pointer-events-none" />
     </div>
   );
 }

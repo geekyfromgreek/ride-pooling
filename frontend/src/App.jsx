@@ -299,36 +299,37 @@ export default function App() {
 
       {/* Settings / Engine Telemetry & Controls Modal */}
       {showSettingsModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 bg-black/85 backdrop-blur-md animate-fade-in">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
           <div
             ref={modalScrollRef}
-            className="w-full max-w-2xl lg:max-w-3xl bg-surface-container rounded-2xl p-4 md:p-5 border border-surface-container-high shadow-2xl flex flex-col gap-3.5 max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-2xl bg-white rounded-2xl p-5 border border-[#EAE5DC] shadow-xl flex flex-col gap-4 max-h-[88vh] overflow-y-auto text-[#1D1D22]"
           >
-            <div className="flex items-center justify-between border-b border-surface-container-high pb-2">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-[#F0EBE1] pb-3">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-[22px]">tune</span>
-                <h3 className="font-headline-md text-headline-md font-semibold text-on-surface">
-                  Engine Telemetry &amp; Controls
+                <span className="material-symbols-outlined text-[20px] text-[#1D1D22]">tune</span>
+                <h3 className="text-base font-bold text-[#1D1D22]">
+                  System Engine &amp; Operations
                 </h3>
               </div>
               <button
                 onClick={() => setShowSettingsModal(false)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-high cursor-pointer transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[#787571] hover:text-[#1D1D22] hover:bg-[#FAF7F2] cursor-pointer transition-colors"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
-            {/* Modal Navigation Tabs */}
-            <div className="w-full border-b border-surface-container-high pb-1">
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-2 px-1">
+            {/* Modal Navigation Pills */}
+            <div className="w-full border-b border-[#F0EBE1] pb-2">
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
                 {[
                   { id: 'controls', label: 'Controls' },
-                  { id: 'gate', label: 'USP 1 · Trust Gate' },
+                  { id: 'gate', label: 'USP 1 · Validation Gate' },
                   { id: 'diff', label: 'USP 2 · Route Diff' },
                   { id: 'traffic', label: 'Traffic' },
                   { id: 'distance', label: 'Distance' },
-                  { id: 'alerts', label: 'GPS Alerts' },
+                  { id: 'alerts', label: 'Integrity' },
                   { id: 'arena', label: 'Arena' }
                 ].map((tab) => {
                   const isActive = activeModalTab === tab.id;
@@ -336,24 +337,13 @@ export default function App() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveModalTab(tab.id)}
-                      className={`h-9 px-3.5 rounded-full font-label-mono text-[11px] uppercase tracking-wider transition-all cursor-pointer shrink-0 font-semibold inline-flex items-center gap-2 select-none ${
+                      className={`h-8 px-3 rounded-full text-xs transition-all cursor-pointer shrink-0 font-semibold inline-flex items-center gap-1.5 select-none ${
                         isActive
-                          ? 'bg-primary text-on-primary shadow-sm ring-1 ring-primary/40'
-                          : 'bg-surface-container-high/60 border border-surface-container-highest/60 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest'
+                          ? 'bg-[#1D1D22] text-white shadow-sm'
+                          : 'bg-[#FAF7F2] border border-[#EAE5DC] text-[#787571] hover:text-[#1D1D22] hover:bg-[#F2ECE1]'
                       }`}
                     >
-                      {(tab.id === 'gate' || tab.id === 'diff') && (
-                        <span
-                          className={`w-2 h-2 rounded-full shrink-0 ${
-                            isActive
-                              ? 'bg-white'
-                              : tab.id === 'gate'
-                              ? 'bg-primary'
-                              : 'bg-[#38bdf8]'
-                          }`}
-                        />
-                      )}
-                      <span className="whitespace-nowrap leading-none">{tab.label}</span>
+                      <span className="whitespace-nowrap">{tab.label}</span>
                     </button>
                   );
                 })}
@@ -362,48 +352,48 @@ export default function App() {
 
             {/* TAB 1: CONTROLS */}
             {activeModalTab === 'controls' && (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low border border-surface-container-high/60">
-                  <span className="font-label-mono text-label-mono text-outline uppercase">Backend State</span>
-                  <span className="font-label-mono text-label-mono text-primary font-semibold">
+              <div className="flex flex-col gap-3.5">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF7F2] border border-[#EAE5DC]">
+                  <span className="text-xs text-[#787571] font-medium">Backend Health</span>
+                  <span className="text-xs text-[#059669] font-bold">
                     {backendStatus}
                   </span>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="font-label-mono text-[11px] text-outline uppercase">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-[#1D1D22]">
                     Simulation Clock Actions
                   </label>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleSimClock('start')}
-                      className="flex-1 h-9 rounded bg-surface-container-high hover:bg-primary hover:text-on-primary text-xs font-semibold uppercase font-label-mono transition-colors cursor-pointer"
+                      className="flex-1 h-9 rounded-xl bg-[#FAF7F2] border border-[#EAE5DC] hover:bg-[#1D1D22] hover:text-white text-xs font-semibold transition-all cursor-pointer"
                     >
                       Resume
                     </button>
                     <button
                       onClick={() => handleSimClock('pause')}
-                      className="flex-1 h-9 rounded bg-surface-container-high hover:bg-surface-variant text-xs font-semibold uppercase font-label-mono transition-colors cursor-pointer"
+                      className="flex-1 h-9 rounded-xl bg-[#FAF7F2] border border-[#EAE5DC] hover:bg-[#1D1D22] hover:text-white text-xs font-semibold transition-all cursor-pointer"
                     >
                       Pause
                     </button>
                     <button
                       onClick={() => handleSimClock('reset')}
-                      className="flex-1 h-9 rounded bg-surface-container-high hover:bg-surface-variant text-xs font-semibold uppercase font-label-mono transition-colors cursor-pointer"
+                      className="flex-1 h-9 rounded-xl bg-[#FAF7F2] border border-[#EAE5DC] hover:bg-[#1D1D22] hover:text-white text-xs font-semibold transition-all cursor-pointer"
                     >
                       Reset
                     </button>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="font-label-mono text-[11px] text-outline uppercase">
-                    Load Scenario
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-[#1D1D22]">
+                    Preset Scenario
                   </label>
                   <select
                     value={selectedScenario}
                     onChange={(e) => handleScenarioChange(e.target.value)}
-                    className="w-full h-9 px-3 rounded bg-surface-container-high text-on-surface border border-surface-container-highest font-body-md text-xs focus:outline-none cursor-pointer"
+                    className="w-full h-10 px-3 rounded-xl bg-[#FAF7F2] text-[#1D1D22] border border-[#EAE5DC] text-xs font-medium focus:outline-none cursor-pointer"
                   >
                     <option value="demo_5r_3v">demo_5r_3v (5 riders, 3 vehicles)</option>
                     <option value="edge_capacity">edge_capacity (Max load edge case)</option>
@@ -412,14 +402,14 @@ export default function App() {
                   </select>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="font-label-mono text-[11px] text-outline uppercase">
-                    Dispatch Strategy
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-[#1D1D22]">
+                    Dispatch Algorithm
                   </label>
                   <select
                     value={selectedStrategy}
                     onChange={(e) => setSelectedStrategy(e.target.value)}
-                    className="w-full h-9 px-3 rounded bg-surface-container-high text-on-surface border border-surface-container-highest font-body-md text-xs focus:outline-none cursor-pointer"
+                    className="w-full h-10 px-3 rounded-xl bg-[#FAF7F2] text-[#1D1D22] border border-[#EAE5DC] text-xs font-medium focus:outline-none cursor-pointer"
                   >
                     <option value="hybrid">Hybrid (LOUD + OR-Tools / Batch)</option>
                     <option value="greedy_fcfs">Greedy FCFS</option>
@@ -429,20 +419,20 @@ export default function App() {
                 </div>
 
                 {backendState && (
-                  <div className="grid grid-cols-2 gap-2 text-xs font-label-mono bg-surface-container-low p-2.5 rounded-lg border border-surface-container-high/60">
-                    <div>Vehicles: <strong className="text-primary">{backendState.vehicles ? backendState.vehicles.length : 0}</strong></div>
-                    <div>Requests: <strong className="text-primary">{backendState.requests ? backendState.requests.length : 0}</strong></div>
-                    <div>Sim Clock: <strong className="text-on-surface">{Math.floor(backendState.sim_time || 0)}s</strong></div>
-                    <div>Batch Window: <strong className="text-on-surface">{backendState.window ? `${backendState.window.elapsed_s}s` : '0s'}</strong></div>
+                  <div className="grid grid-cols-2 gap-2 text-xs bg-[#FAF7F2] p-3 rounded-xl border border-[#EAE5DC]">
+                    <div>Vehicles: <strong className="text-[#1D1D22]">{backendState.vehicles ? backendState.vehicles.length : 0}</strong></div>
+                    <div>Requests: <strong className="text-[#1D1D22]">{backendState.requests ? backendState.requests.length : 0}</strong></div>
+                    <div>Sim Clock: <strong className="text-[#1D1D22]">{Math.floor(backendState.sim_time || 0)}s</strong></div>
+                    <div>Batch Window: <strong className="text-[#1D1D22]">{backendState.window ? `${backendState.window.elapsed_s}s` : '0s'}</strong></div>
                   </div>
                 )}
 
                 <button
                   onClick={handleDispatchRun}
-                  className="w-full h-10 rounded-lg bg-primary text-on-primary font-body-md font-semibold hover:bg-primary-container transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-primary/20"
+                  className="w-full h-11 rounded-full bg-[#1D1D22] text-white text-xs font-bold hover:bg-black transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
                 >
                   <span className="material-symbols-outlined text-[18px]">bolt</span>
-                  <span>Force Dispatch Run</span>
+                  <span>Trigger Batch Dispatch</span>
                 </button>
               </div>
             )}
@@ -467,9 +457,9 @@ export default function App() {
 
             {/* TAB 2: TRAFFIC */}
             {activeModalTab === 'traffic' && (
-              <div className="flex flex-col gap-3">
-                <span className="font-body-sm text-xs text-on-surface-variant">
-                  Switch active traffic scenario to test congestion ETA updates and delay resilience:
+              <div className="flex flex-col gap-2.5">
+                <span className="text-xs text-[#787571]">
+                  Adjust road congestion profile to test ETA updates:
                 </span>
                 {[
                   { mode: 'NORMAL', label: 'Normal Traffic (1.0x)', desc: 'Standard speed profile' },
@@ -481,18 +471,18 @@ export default function App() {
                   <button
                     key={item.mode}
                     onClick={() => handleTrafficChange(item.mode)}
-                    className={`p-2.5 rounded-lg text-left border flex items-center justify-between transition-all cursor-pointer ${
+                    className={`p-3 rounded-xl text-left border flex items-center justify-between transition-all cursor-pointer ${
                       trafficMode === item.mode
-                        ? 'bg-primary-container/20 border-primary text-primary'
-                        : 'bg-surface-container-low border-surface-container-high hover:border-surface-variant'
+                        ? 'bg-[#FAF7F2] border-[#1D1D22] text-[#1D1D22]'
+                        : 'bg-white border-[#EAE5DC] hover:border-[#CDC7BC]'
                     }`}
                   >
                     <div>
-                      <div className="font-label-mono text-xs font-semibold">{item.label}</div>
-                      <div className="text-[11px] text-on-surface-variant">{item.desc}</div>
+                      <div className="text-xs font-bold text-[#1D1D22]">{item.label}</div>
+                      <div className="text-[11px] text-[#787571] mt-0.5">{item.desc}</div>
                     </div>
                     {trafficMode === item.mode && (
-                      <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                      <span className="material-symbols-outlined text-[#10B981] text-[18px]">check_circle</span>
                     )}
                   </button>
                 ))}
@@ -502,56 +492,56 @@ export default function App() {
             {/* TAB 3: DISTANCE CONFIG */}
             {activeModalTab === 'distance' && distanceConfig && (
               <div className="flex flex-col gap-2.5">
-                <span className="font-body-sm text-xs text-on-surface-variant">
-                  Backend-owned distance and pooling limits:
+                <span className="text-xs text-[#787571]">
+                  System parameters configured on backend:
                 </span>
-                <div className="grid grid-cols-2 gap-2 text-xs font-label-mono">
-                  <div className="p-2 rounded bg-surface-container-low border border-surface-container-high/60">
-                    <span className="text-outline block text-[10px]">INITIAL RADIUS</span>
-                    <strong className="text-on-surface">{distanceConfig.initial_search_radius_m} m</strong>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#EAE5DC]">
+                    <span className="text-[#787571] block text-[10px] font-medium">INITIAL RADIUS</span>
+                    <strong className="text-[#1D1D22] text-sm">{distanceConfig.initial_search_radius_m} m</strong>
                   </div>
-                  <div className="p-2 rounded bg-surface-container-low border border-surface-container-high/60">
-                    <span className="text-outline block text-[10px]">MAX RADIUS</span>
-                    <strong className="text-on-surface">{distanceConfig.max_search_radius_m} m</strong>
+                  <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#EAE5DC]">
+                    <span className="text-[#787571] block text-[10px] font-medium">MAX RADIUS</span>
+                    <strong className="text-[#1D1D22] text-sm">{distanceConfig.max_search_radius_m} m</strong>
                   </div>
-                  <div className="p-2 rounded bg-surface-container-low border border-surface-container-high/60">
-                    <span className="text-outline block text-[10px]">MAX DETOUR</span>
-                    <strong className="text-on-surface">{Math.round(distanceConfig.max_detour_cap * 100)}%</strong>
+                  <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#EAE5DC]">
+                    <span className="text-[#787571] block text-[10px] font-medium">MAX DETOUR CAP</span>
+                    <strong className="text-[#1D1D22] text-sm">{Math.round(distanceConfig.max_detour_cap * 100)}%</strong>
                   </div>
-                  <div className="p-2 rounded bg-surface-container-low border border-surface-container-high/60">
-                    <span className="text-outline block text-[10px]">MAX WAIT</span>
-                    <strong className="text-on-surface">{distanceConfig.max_pickup_wait_s} s</strong>
+                  <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#EAE5DC]">
+                    <span className="text-[#787571] block text-[10px] font-medium">MAX WAIT</span>
+                    <strong className="text-[#1D1D22] text-sm">{distanceConfig.max_pickup_wait_s} s</strong>
                   </div>
-                  <div className="p-2 rounded bg-surface-container-low border border-surface-container-high/60">
-                    <span className="text-outline block text-[10px]">VEHICLE CAPACITY</span>
-                    <strong className="text-on-surface">{distanceConfig.vehicle_capacity} seats</strong>
+                  <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#EAE5DC]">
+                    <span className="text-[#787571] block text-[10px] font-medium">CAPACITY</span>
+                    <strong className="text-[#1D1D22] text-sm">{distanceConfig.vehicle_capacity} seats</strong>
                   </div>
-                  <div className="p-2 rounded bg-surface-container-low border border-surface-container-high/60">
-                    <span className="text-outline block text-[10px]">BASE FARE</span>
-                    <strong className="text-on-surface">₹{distanceConfig.base_fare_per_km}/km</strong>
+                  <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#EAE5DC]">
+                    <span className="text-[#787571] block text-[10px] font-medium">BASE FARE</span>
+                    <strong className="text-[#1D1D22] text-sm">₹{distanceConfig.base_fare_per_km}/km</strong>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* TAB 4: GPS ALERTS */}
+            {/* TAB 4: GPS INTEGRITY */}
             {activeModalTab === 'alerts' && (
               <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
-                <span className="font-body-sm text-xs text-on-surface-variant">
+                <span className="text-xs text-[#787571]">
                   Authoritative location integrity observations:
                 </span>
                 {fraudAlerts.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-on-surface-variant font-label-mono bg-surface-container-low rounded-lg border border-surface-container-high/60">
-                    No active GPS fraud or quarantined observations. Fleet telemetry verified clean.
+                  <div className="p-4 text-center text-xs text-[#787571] bg-[#FAF7F2] rounded-xl border border-[#EAE5DC]">
+                    No active GPS alerts. Fleet telemetry is clean and authentic.
                   </div>
                 ) : (
                   fraudAlerts.map((alert, idx) => (
-                    <div key={idx} className="p-2 rounded bg-surface-container-low border border-error/40 text-xs">
-                      <div className="flex justify-between font-label-mono text-error font-semibold">
+                    <div key={idx} className="p-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-xs">
+                      <div className="flex justify-between text-[#991B1B] font-bold">
                         <span>{alert.entity_id}</span>
                         <span>Risk {alert.risk_score}</span>
                       </div>
-                      <div className="text-[11px] text-on-surface-variant mt-1">{alert.reason}</div>
+                      <div className="text-[11px] text-[#787571] mt-1">{alert.reason}</div>
                     </div>
                   ))
                 )}
@@ -560,31 +550,31 @@ export default function App() {
 
             {/* TAB 5: ARENA */}
             {activeModalTab === 'arena' && (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 <button
                   onClick={handleRunArena}
-                  className="w-full h-9 rounded bg-surface-container-high hover:bg-primary hover:text-on-primary text-xs font-semibold font-label-mono transition-colors cursor-pointer"
+                  className="w-full h-10 rounded-full bg-[#1D1D22] text-white text-xs font-bold hover:bg-black transition-colors cursor-pointer"
                 >
-                  Run Strategy Benchmark on {selectedScenario}
+                  Run Benchmark on {selectedScenario}
                 </button>
                 {arenaResults && arenaResults.strategies && (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs font-label-mono border-collapse">
+                  <div className="overflow-x-auto rounded-xl border border-[#EAE5DC]">
+                    <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="border-b border-surface-container-high text-outline text-[10px]">
-                          <th className="py-1">Strategy</th>
-                          <th className="py-1">Dist (km)</th>
-                          <th className="py-1">Served</th>
-                          <th className="py-1">Solve</th>
+                        <tr className="bg-[#FAF7F2] border-b border-[#EAE5DC] text-[#787571]">
+                          <th className="py-2 px-3 font-semibold">Strategy</th>
+                          <th className="py-2 px-3 font-semibold">Distance</th>
+                          <th className="py-2 px-3 font-semibold">Served</th>
+                          <th className="py-2 px-3 font-semibold">Solve Time</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-[#F0EBE1]">
                         {arenaResults.strategies.map((st, i) => (
-                          <tr key={i} className="border-b border-surface-container-high/40">
-                            <td className="py-1.5 text-on-surface font-semibold">{st.name}</td>
-                            <td className="py-1.5 text-primary">{st.pooled_km}</td>
-                            <td className="py-1.5">{st.served_pct}%</td>
-                            <td className="py-1.5 text-outline">{st.solve_ms}ms</td>
+                          <tr key={i} className="hover:bg-[#FAF7F2]/50">
+                            <td className="py-2 px-3 text-[#1D1D22] font-semibold">{st.name}</td>
+                            <td className="py-2 px-3 text-[#1D1D22]">{st.pooled_km} km</td>
+                            <td className="py-2 px-3 text-[#059669] font-medium">{st.served_pct}%</td>
+                            <td className="py-2 px-3 text-[#787571]">{st.solve_ms}ms</td>
                           </tr>
                         ))}
                       </tbody>
@@ -594,12 +584,12 @@ export default function App() {
               </div>
             )}
 
-            <div className="border-t border-surface-container-high pt-2 flex justify-end">
+            <div className="border-t border-[#F0EBE1] pt-3 flex justify-end">
               <button
                 onClick={() => setShowSettingsModal(false)}
-                className="px-4 h-9 rounded-lg bg-surface-container-high text-on-surface font-label-mono text-xs uppercase hover:bg-surface-variant transition-colors cursor-pointer border border-surface-container-highest"
+                className="px-5 h-9 rounded-full bg-[#1D1D22] text-white text-xs font-semibold hover:bg-black transition-colors cursor-pointer"
               >
-                Done
+                Close
               </button>
             </div>
           </div>
