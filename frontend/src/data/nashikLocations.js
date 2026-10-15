@@ -622,6 +622,121 @@ export const FLEET_VEHICLES = [
   }
 ];
 
+export const DRIVER_POOL = [
+  {
+    name: 'Ramesh Patil',
+    initials: 'RP',
+    model: 'Tata Tigor EV',
+    plate: 'MH 15 AB 4821',
+    rating: '4.90',
+    trips: '2,140',
+    gender: 'male',
+    verifiedBadge: 'Verified Pilot'
+  },
+  {
+    name: 'Pooja Deshmukh',
+    initials: 'PD',
+    model: 'MG ZS EV',
+    plate: 'MH 15 BK 7714',
+    rating: '4.95',
+    trips: '3,210',
+    gender: 'female',
+    verifiedBadge: 'Women-Verified Pilot'
+  },
+  {
+    name: 'Sunil Shinde',
+    initials: 'SS',
+    model: 'Tata Tiago EV',
+    plate: 'MH 15 DX 3312',
+    rating: '4.88',
+    trips: '1,890',
+    gender: 'male',
+    verifiedBadge: 'Verified Pilot'
+  },
+  {
+    name: 'Anjali Patil',
+    initials: 'AP',
+    model: 'Mahindra XUV400',
+    plate: 'MH 15 CZ 5560',
+    rating: '4.94',
+    trips: '2,750',
+    gender: 'female',
+    verifiedBadge: 'Women-Verified Pilot'
+  },
+  {
+    name: 'Vikram Kulkarni',
+    initials: 'VK',
+    model: 'Hyundai Kona EV',
+    plate: 'MH 15 EG 9021',
+    rating: '4.86',
+    trips: '1,420',
+    gender: 'male',
+    verifiedBadge: 'Verified Pilot'
+  },
+  {
+    name: 'Sunita Shinde',
+    initials: 'SS',
+    model: 'Tata Tigor EV',
+    plate: 'MH 15 GH 4452',
+    rating: '4.97',
+    trips: '2,430',
+    gender: 'female',
+    verifiedBadge: 'Women-Verified Pilot'
+  },
+  {
+    name: 'Sachin Bhalerao',
+    initials: 'SB',
+    model: 'Tata Nexon EV',
+    plate: 'MH 15 FA 1198',
+    rating: '4.91',
+    trips: '980',
+    gender: 'male',
+    verifiedBadge: 'Verified Pilot'
+  },
+  {
+    name: 'Deepak Pawar',
+    initials: 'DP',
+    model: 'BYD Atto 3',
+    plate: 'MH 15 JK 6701',
+    rating: '4.89',
+    trips: '1,650',
+    gender: 'male',
+    verifiedBadge: 'Verified Pilot'
+  },
+  {
+    name: 'Kavita Jadhav',
+    initials: 'KJ',
+    model: 'Tata Nexon EV',
+    plate: 'MH 15 LM 8832',
+    rating: '4.93',
+    trips: '2,190',
+    gender: 'female',
+    verifiedBadge: 'Women-Verified Pilot'
+  },
+  {
+    name: 'Vinay Joshi',
+    initials: 'VJ',
+    model: 'Tata Tiago EV',
+    plate: 'MH 15 PQ 2045',
+    rating: '4.87',
+    trips: '1,120',
+    gender: 'male',
+    verifiedBadge: 'Verified Pilot'
+  }
+];
+
+export function getRandomDriver(womenVerifiedOnly = false, seed = null) {
+  let list = DRIVER_POOL;
+  if (womenVerifiedOnly) {
+    const womenList = DRIVER_POOL.filter((d) => d.gender === 'female');
+    if (womenList.length > 0) list = womenList;
+  }
+  const idx = typeof seed === 'number'
+    ? Math.abs(seed) % list.length
+    : Math.floor(Math.random() * list.length);
+  return list[idx];
+}
+
 /**
  * Returns a realistic, dynamic shared ride upstream origin where the vehicle is coming from,
  * representing an existing co-rider's pickup point along the transit network.

@@ -473,69 +473,114 @@ export default function LeafletMap({
     const isAtPickup = Boolean(vehicleCoord.isAtPickup);
     const isCompleted = Boolean(vehicleCoord.isCompleted);
     const label = vehicleCoord.label || (vehicleCoord.isApproaching ? 'Approaching Pickup' : 'Tata Tigor EV');
+    
+    // Co-riders count: 0 (driver only), 1 (driver + 1 co-rider), 2 (driver + 2 co-riders)
+    const coRidersCount = typeof vehicleCoord.coRidersCount === 'number' 
+      ? vehicleCoord.coRidersCount 
+      : (vehicleCoord.isApproaching ? 1 : 2);
 
     const vehicleIcon = L.divIcon({
       className: 'custom-vehicle-moving-node',
       html: `
         <style>
           @keyframes cabPingWave {
-            0% { transform: scale(0.85); opacity: 0.95; }
-            75%, 100% { transform: scale(2.4); opacity: 0; }
+            0% { transform: scale(0.8); opacity: 0.95; }
+            75%, 100% { transform: scale(2.5); opacity: 0; }
           }
           @keyframes cabGlowPulse {
             0%, 100% { opacity: 0.35; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.18); }
+            50% { opacity: 0.8; transform: scale(1.15); }
           }
         </style>
         <div style="position: relative; display: flex; flex-direction: column; align-items: center; pointer-events: none;">
           <!-- Floating Status Pill like Zomato/Blinkit -->
-          <div style="background: rgba(29,29,34,0.96); backdrop-filter: blur(8px); padding: 4px 10px; border-radius: 9999px; border: 1.5px solid #F5C451; box-shadow: 0 4px 14px rgba(0,0,0,0.22); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10.5px; font-weight: 700; color: #FFFFFF; margin-bottom: 5px; white-space: nowrap; display: flex; align-items: center; gap: 6px;">
+          <div style="background: rgba(29,29,34,0.96); backdrop-filter: blur(8px); padding: 4px 10px; border-radius: 9999px; border: 1.5px solid #F5C451; box-shadow: 0 4px 14px rgba(0,0,0,0.25); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10.5px; font-weight: 700; color: #FFFFFF; margin-bottom: 6px; white-space: nowrap; display: flex; align-items: center; gap: 6px;">
             <span style="width: 7px; height: 7px; border-radius: 50%; background: ${isAtPickup ? '#10B981' : isCompleted ? '#3B82F6' : '#F5C451'}; ${isAtPickup ? 'box-shadow: 0 0 8px #10B981;' : 'box-shadow: 0 0 6px #F5C451;'}"></span>
             <span>${label}</span>
+            <!-- Mini Occupancy Indicator -->
+            ${coRidersCount === 0 ? `
+              <span style="background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); padding: 1px 6px; border-radius: 9999px; font-size: 9.5px; font-weight: 700; color: #FFFFFF;">👤 Driver Only (1/4)</span>
+            ` : coRidersCount === 1 ? `
+              <span style="background: rgba(245,196,81,0.22); border: 1px solid rgba(245,196,81,0.6); padding: 1px 6px; border-radius: 9999px; font-size: 9.5px; font-weight: 700; color: #F5C451;">👤+👤 1 Co-Rider (2/4)</span>
+            ` : `
+              <span style="background: rgba(16,185,129,0.22); border: 1px solid rgba(16,185,129,0.6); padding: 1px 6px; border-radius: 9999px; font-size: 9.5px; font-weight: 700; color: #10B981;">👤+👤👤 2 Riders (3/4)</span>
+            `}
           </div>
 
-          <!-- Cab Marker Container with Directional Rotation -->
-          <div style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+          <!-- Pure Car Cutout Container (No Black Disc Circle) -->
+          <div style="position: relative; width: 68px; height: 68px; display: flex; align-items: center; justify-content: center;">
             ${isAtPickup ? `
-              <!-- Green Arrival Ripple Wave (Zomato/Blinkit arrival alert) -->
-              <div style="position: absolute; inset: -10px; border-radius: 50%; border: 3px solid #10B981; animation: cabPingWave 1.4s cubic-bezier(0,0,0.2,1) infinite;"></div>
-              <div style="position: absolute; inset: -4px; border-radius: 50%; background: rgba(16,185,129,0.25); animation: cabGlowPulse 1.4s infinite;"></div>
+              <!-- Green Arrival Ripple Wave (Zomato/Blinkit arrival alert) radiating from car -->
+              <div style="position: absolute; width: 62px; height: 62px; border-radius: 50%; border: 3px solid #10B981; animation: cabPingWave 1.4s cubic-bezier(0,0,0.2,1) infinite;"></div>
+              <div style="position: absolute; width: 44px; height: 44px; border-radius: 50%; background: rgba(16,185,129,0.25); animation: cabGlowPulse 1.4s infinite;"></div>
             ` : ''}
 
-            <!-- Directional Cab Icon rotated to Road Angle -->
-            <div style="position: relative; width: 42px; height: 42px; border-radius: 50%; background: #1D1D22; border: 2.5px solid #FFFFFF; box-shadow: 0 6px 18px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; transform: rotate(${bearing}deg); transition: transform 0.1s linear;">
-              <!-- Authentic Top-down Cab Vector (Zomato/Blinkit/Uber) -->
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <!-- Pure Car Cutout Vector Rotated to Road Bearing -->
+            <div style="transform: rotate(${bearing}deg); transition: transform 0.1s linear; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.45));">
+              <svg width="28" height="56" viewBox="0 0 28 56" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <!-- Front Wheels -->
-                <rect x="2.5" y="4.5" width="2" height="4" rx="1" fill="#1D1D22"/>
-                <rect x="19.5" y="4.5" width="2" height="4" rx="1" fill="#1D1D22"/>
+                <rect x="0.5" y="9" width="2" height="7" rx="1" fill="#18181B"/>
+                <rect x="25.5" y="9" width="2" height="7" rx="1" fill="#18181B"/>
                 <!-- Rear Wheels -->
-                <rect x="2.5" y="15.5" width="2" height="4" rx="1" fill="#1D1D22"/>
-                <rect x="19.5" y="15.5" width="2" height="4" rx="1" fill="#1D1D22"/>
-                <!-- Car Body -->
-                <rect x="5" y="2" width="14" height="20" rx="4.5" fill="#F5C451" stroke="#FFFFFF" stroke-width="1.2"/>
-                <!-- Windshield Front -->
-                <path d="M7 6.5H17L15.5 10H8.5L7 6.5Z" fill="#1D1D22"/>
-                <!-- Roof Taxi Sign -->
-                <rect x="9.5" y="11" width="5" height="2.2" rx="0.8" fill="#FFFFFF"/>
-                <!-- Rear Glass -->
-                <rect x="7.5" y="15.5" width="9" height="2.5" rx="0.8" fill="#1D1D22"/>
-                <!-- Headlights (Forward) -->
-                <circle cx="7" cy="3.5" r="1.1" fill="#FFFFFF"/>
-                <circle cx="17" cy="3.5" r="1.1" fill="#FFFFFF"/>
-                <!-- Taillights (Rear) -->
-                <rect x="6.5" y="20.5" width="2.5" height="1" rx="0.5" fill="#EF4444"/>
-                <rect x="15" y="20.5" width="2.5" height="1" rx="0.5" fill="#EF4444"/>
+                <rect x="0.5" y="38" width="2" height="7" rx="1" fill="#18181B"/>
+                <rect x="25.5" y="38" width="2" height="7" rx="1" fill="#18181B"/>
+
+                <!-- Aerodynamic Car Chassis Cutout Body -->
+                <path d="M6 3 C9 1 19 1 22 3 C25 6 26 12 26 17 L27 20 C28 21 28 24 26.5 25 L26 26 L26 48 C26 53 24 55 21 55 L7 55 C4 55 2 53 2 48 L2 26 L1.5 25 C0 24 0 21 1 20 L2 17 C2 12 3 6 6 3 Z" fill="#F5C451" stroke="#FFFFFF" stroke-width="1.2"/>
+
+                <!-- Front Headlights (White Forward Beams) -->
+                <circle cx="6" cy="3.5" r="1.3" fill="#FFFFFF"/>
+                <circle cx="22" cy="3.5" r="1.3" fill="#FFFFFF"/>
+                
+                <!-- Front Windshield (Dark Curved Glass) -->
+                <path d="M5.5 13 Q14 10.5 22.5 13 L21 18 Q14 16 7 18 Z" fill="#18181B"/>
+
+                <!-- Panoramic Cabin Glass Interior with Driver & Passengers -->
+                <rect x="5.5" y="18" width="17" height="25" rx="3.5" fill="#18181B" stroke="#27272A" stroke-width="0.8"/>
+
+                <!-- Driver Seat (Front Right in India - RHD) -->
+                <!-- Steering Wheel Arc -->
+                <path d="M16 19.5 A2 2 0 0 1 20 19.5" stroke="#F5C451" stroke-width="1" fill="none"/>
+                <!-- Driver Avatar (White Head with Dark Cap) -->
+                <circle cx="18" cy="23" r="2.8" fill="#FFFFFF"/>
+                <circle cx="18" cy="23" r="1.1" fill="#18181B"/>
+
+                <!-- Front Left Passenger Seat (Empty Contour) -->
+                <rect x="6.5" y="20.5" width="5" height="5" rx="1.5" fill="#27272A" opacity="0.3"/>
+
+                <!-- Rear Left Seat (Co-Rider 1) -->
+                ${coRidersCount >= 1 ? `
+                  <!-- Co-Rider 1 Onboard (Warm Amber Avatar) -->
+                  <circle cx="9" cy="35" r="2.8" fill="#F5C451"/>
+                  <circle cx="9" cy="35" r="1.1" fill="#18181B"/>
+                ` : `
+                  <!-- Empty Seat Contour -->
+                  <rect x="6.5" y="32.5" width="5" height="5" rx="1.5" fill="#27272A" opacity="0.25"/>
+                `}
+
+                <!-- Rear Right Seat (User Passenger) -->
+                ${coRidersCount >= 2 ? `
+                  <!-- User Onboard (Radiant Emerald Avatar) -->
+                  <circle cx="18" cy="35" r="2.8" fill="#10B981"/>
+                  <circle cx="18" cy="35" r="1.1" fill="#FFFFFF"/>
+                ` : `
+                  <!-- Empty Seat Contour -->
+                  <rect x="15.5" y="32.5" width="5" height="5" rx="1.5" fill="#27272A" opacity="0.25"/>
+                `}
+
+                <!-- Rear Windshield -->
+                <path d="M7 44 Q14 46 21 44 L22 48 Q14 50 6 48 Z" fill="#18181B"/>
+
+                <!-- Rear Taillights (Red LED Strips) -->
+                <rect x="5.5" y="53.5" width="3.5" height="1.5" rx="0.5" fill="#EF4444"/>
+                <rect x="19" y="53.5" width="3.5" height="1.5" rx="0.5" fill="#EF4444"/>
               </svg>
             </div>
-
-            <!-- Active Indicator Dot -->
-            <div style="position: absolute; top: -1px; right: -1px; width: 11px; height: 11px; border-radius: 50%; background: ${isAtPickup ? '#10B981' : isCompleted ? '#3B82F6' : '#F5C451'}; border: 2px solid #FFFFFF; box-shadow: 0 1px 4px rgba(0,0,0,0.2);"></div>
           </div>
         </div>
       `,
-      iconSize: [140, 68],
-      iconAnchor: [70, 52]
+      iconSize: [160, 105],
+      iconAnchor: [80, 60]
     });
 
     if (!vehicleMarkerRef.current || !map.hasLayer(vehicleMarkerRef.current)) {

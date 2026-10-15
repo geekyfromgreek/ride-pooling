@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import LeafletMap from '../components/LeafletMap';
-import { NASHIK_HUBS, getSharedRideOrigin } from '../data/nashikLocations';
+import { NASHIK_HUBS, getSharedRideOrigin, getRandomDriver } from '../data/nashikLocations';
 import { fetchRoadRoute, getAccurateDistance } from '../utils/routing';
 
 // Calculate bearing between two coordinates in degrees (0 = North, 90 = East)
@@ -117,6 +117,12 @@ export default function JourneyScreen({
     bootSpace: true,
     cabinTemp: 23
   };
+
+  // Assigned Unique Driver for this booking
+  const driver = useMemo(() => {
+    if (activeRide?.driver) return activeRide.driver;
+    return getRandomDriver(harmony?.womenVerified, randomSeed);
+  }, [activeRide?.driver, harmony?.womenVerified, randomSeed]);
 
   // Road Routing state
   const [routeCoords, setRouteCoords] = useState([]);
@@ -289,7 +295,8 @@ export default function JourneyScreen({
         isApproaching: true,
         isAtPickup: false,
         isCompleted: false,
-        label: `Tata Tigor EV · Arriving in ~${minsLeft}m`
+        coRidersCount: 1, // Driver + 1 co-rider already onboard
+        label: `${driver.model} · Arriving in ~${minsLeft}m`
       };
     }
 
@@ -304,7 +311,8 @@ export default function JourneyScreen({
         isApproaching: false,
         isAtPickup: true,
         isCompleted: false,
-        label: `Driver at Pickup · Boarding (${boardingCountdown}s)`
+        coRidersCount: 1, // At pickup, boarding user
+        label: `${driver.name} at Pickup · Boarding (${boardingCountdown}s)`
       };
     }
 
@@ -319,7 +327,8 @@ export default function JourneyScreen({
         isApproaching: false,
         isAtPickup: false,
         isCompleted: false,
-        label: `Tata Tigor EV · On Trip (~${minsLeft}m left)`
+        coRidersCount: 2, // Driver + Co-rider 1 + User
+        label: `${driver.model} · On Trip (~${minsLeft}m left)`
       };
     }
 
@@ -331,9 +340,10 @@ export default function JourneyScreen({
       isApproaching: false,
       isAtPickup: false,
       isCompleted: true,
+      coRidersCount: 2,
       label: 'Destination Reached · ₹Saved!'
     };
-  }, [simPhase, simProgress, effectiveApproachCoords, effectiveRouteCoords, origin, dest, boardingCountdown, directTimeMin]);
+  }, [simPhase, simProgress, effectiveApproachCoords, effectiveRouteCoords, origin, dest, boardingCountdown, directTimeMin, driver]);
 
   const hasArrivedAtPickup = simPhase === 'arrived_pickup' || simPhase === 'in_transit' || simPhase === 'completed';
 
@@ -389,7 +399,7 @@ export default function JourneyScreen({
             `Vehicle started at ${sharedOrigin.shortName} (${approachDistanceKm} km away) with co-rider 1 and is approaching your pickup at ${origin.shortName}.`
           )}
           {simPhase === 'arrived_pickup' && (
-            `Vehicle has arrived at ${origin.shortName}! Board now with your co-rider (Tata Tigor EV · MH 15 AB 4821).`
+            `Vehicle has arrived at ${origin.shortName}! Board now with your co-rider (${driver.model} · ${driver.plate}).`
           )}
           {simPhase === 'in_transit' && (
             `En route to ${dest.shortName} with co-rider onboard. Clean electric drive with optimized detour cap satisfied.`
@@ -485,23 +495,23 @@ export default function JourneyScreen({
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="w-12 h-12 rounded-full bg-[#FAF7F2] border border-[#EAE5DC] flex items-center justify-center font-bold text-[#1D1D22] text-sm">
-                RP
+                {driver.initials}
               </div>
               <div className="absolute -bottom-1 -right-1 bg-white border border-[#EAE5DC] rounded-full px-1.5 py-0.2 flex items-center gap-0.5 shadow-xs">
                 <span className="material-symbols-outlined text-[11px] text-[#F5C451]">star</span>
-                <span className="text-[10px] font-bold text-[#1D1D22]">4.9</span>
+                <span className="text-[10px] font-bold text-[#1D1D22]">{driver.rating}</span>
               </div>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
                 <h4 className="text-[15px] font-bold text-[#1D1D22] leading-tight">
-                  Ramesh Patil
+                  {driver.name}
                 </h4>
-                <span className="text-xs text-[#787571]">· Tata Tigor EV</span>
+                <span className="text-xs text-[#787571]">· {driver.model}</span>
               </div>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[11px] font-bold text-[#1D1D22] bg-[#FAF7F2] border border-[#EAE5DC] px-2 py-0.5 rounded-md">
-                  MH 15 AB 4821
+                  {driver.plate}
                 </span>
                 <span className="text-[11px] text-[#787571]">
                   {simPhase === 'approaching' && 'Arriving in ~2 mins'}

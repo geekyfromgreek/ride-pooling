@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import LeafletMap from '../components/LeafletMap';
 import { fetchRoadRoute, getAccurateDistance } from '../utils/routing';
-import { NASHIK_HUBS, getSharedRideOrigin } from '../data/nashikLocations';
+import { NASHIK_HUBS, getSharedRideOrigin, getRandomDriver } from '../data/nashikLocations';
 
 // Calculate bearing between two coordinates in degrees
 function calculateBearing(startLat, startLng, destLat, destLng) {
@@ -368,6 +368,7 @@ export default function PoolScreen({
   }, [originHub, destHub, roadRoute]);
 
   // Matching Stage Progression
+  const [assignedDriver, setAssignedDriver] = useState(() => getRandomDriver(false, 101));
   const [progressPercent, setProgressPercent] = useState(45);
   const [matchingStatusIdx, setMatchingStatusIdx] = useState(0);
 
@@ -522,6 +523,7 @@ export default function PoolScreen({
         isApproaching: true,
         isAtPickup: false,
         isCompleted: false,
+        coRidersCount: 1, // Driver + Co-rider 1 already onboard
         label: `Tata Tigor EV · Arriving in ~${minsLeft}m`
       };
     }
@@ -537,6 +539,7 @@ export default function PoolScreen({
         isApproaching: false,
         isAtPickup: true,
         isCompleted: false,
+        coRidersCount: 1, // At pickup, boarding user
         label: `Driver Arrived · Boarding (${boardingCountdown}s)`
       };
     }
@@ -555,6 +558,7 @@ export default function PoolScreen({
         isApproaching: false,
         isAtPickup: false,
         isCompleted: false,
+        coRidersCount: 2, // Driver + Co-rider 1 + User
         label: `En Route to ${destHub.shortName} · ${estMin}m`
       };
     }
@@ -570,6 +574,7 @@ export default function PoolScreen({
       isApproaching: false,
       isAtPickup: false,
       isCompleted: true,
+      coRidersCount: 2,
       label: 'Arrived at Destination'
     };
   }, [simPhase, simProgress, approachRouteCoords, activeRouteCoords, sharedOriginHub, originHub, destHub, boardingCountdown, estTimeMin]);
@@ -874,6 +879,8 @@ export default function PoolScreen({
                 const freshSeed = Math.floor(Math.random() * 10000);
                 setSharedOriginSeed(freshSeed);
                 const freshSharedOrigin = getSharedRideOrigin(originHub, destHub, freshSeed);
+                const freshDriver = getRandomDriver(harmonyPrefs?.womenVerified, freshSeed);
+                setAssignedDriver(freshDriver);
                 setPoolStage('matching');
                 if (onRequestRide) {
                   onRequestRide({
@@ -882,7 +889,8 @@ export default function PoolScreen({
                     sharedOrigin: freshSharedOrigin,
                     soloFare,
                     pooledFare: dynamicPoolPrice,
-                    harmonyPrefs
+                    harmonyPrefs,
+                    driver: freshDriver
                   });
                 }
               }}
@@ -1110,21 +1118,21 @@ export default function PoolScreen({
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="w-12 h-12 rounded-full overflow-hidden border border-[#EAE5DC] bg-[#FAF7F2] flex items-center justify-center font-bold text-sm text-[#1D1D22]">
-                    RP
+                    {assignedDriver.initials}
                   </div>
                   <div className="absolute -bottom-1 -right-1 bg-white border border-[#EAE5DC] rounded-full px-1 py-0.2 flex items-center gap-0.5 text-[10px] font-bold text-[#1D1D22] shadow-xs">
                     <span className="material-symbols-outlined text-[11px] text-[#F5C451]">star</span>
-                    4.9
+                    {assignedDriver.rating}
                   </div>
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <h3 className="text-[15px] font-bold text-[#1D1D22]">Ramesh Patil</h3>
-                    <span className="text-xs text-[#787571]">• Tata Tigor EV</span>
+                    <h3 className="text-[15px] font-bold text-[#1D1D22]">{assignedDriver.name}</h3>
+                    <span className="text-xs text-[#787571]">• {assignedDriver.model}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[11px] font-semibold text-[#1D1D22] bg-[#F4EFEB] px-2 py-0.5 rounded tracking-wide border border-[#EAE5DC]">
-                      MH 15 AB 4821
+                      {assignedDriver.plate}
                     </span>
                     <span className="text-xs text-[#787571]">
                       {simPhase === 'approaching' && 'Approaching pickup point'}

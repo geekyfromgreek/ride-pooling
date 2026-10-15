@@ -170,7 +170,7 @@ export default function App() {
     }
   };
 
-  const handleRequestRide = async ({ origin, dest, sharedOrigin, soloFare, pooledFare, harmonyPrefs }) => {
+  const handleRequestRide = async ({ origin, dest, sharedOrigin, soloFare, pooledFare, harmonyPrefs, driver }) => {
     let res = null;
     try {
       res = await submitRideRequest({
@@ -189,7 +189,8 @@ export default function App() {
       sharedOrigin,
       soloFare,
       pooledFare,
-      harmonyPrefs
+      harmonyPrefs,
+      driver
     });
   };
 
