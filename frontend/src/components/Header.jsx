@@ -47,33 +47,37 @@ export default function Header({
           )}
 
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-[#1D1D22] text-[#F5C451] flex items-center justify-center font-bold text-sm shadow-sm select-none">
-              P
+            {/* Custom PoolIQ SVG Brandmark */}
+            <div className="relative w-8 h-8 rounded-xl bg-[#1D1D22] flex items-center justify-center shadow-sm select-none shrink-0 border border-[#EAE5DC]">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Converging route lines */}
+                <path d="M4 18C4 13.5 8 12 12 12" stroke="#FAF7F2" strokeWidth="2.2" strokeLinecap="round" />
+                <path d="M4 6C4 10.5 8 12 12 12" stroke="#F5C451" strokeWidth="2.2" strokeLinecap="round" />
+                <path d="M12 12H20" stroke="#F5C451" strokeWidth="2.5" strokeLinecap="round" />
+                {/* Node dots */}
+                <circle cx="4" cy="6" r="2" fill="#F5C451" />
+                <circle cx="4" cy="18" r="2" fill="#FAF7F2" />
+                <circle cx="19" cy="12" r="2.5" fill="#F5C451" stroke="#1D1D22" strokeWidth="1.5" />
+              </svg>
             </div>
             <div className="flex flex-col">
-              <span className="font-sans font-bold text-[15px] tracking-tight text-[#1D1D22] leading-none">
-                PoolIQ
-              </span>
+              <div className="flex items-center gap-1 leading-none">
+                <span className="font-sans font-extrabold text-[16px] tracking-tight text-[#1D1D22]">
+                  Pool<span className="text-[#D97706]">IQ</span>
+                </span>
+                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[#FAF7F2] border border-[#EAE5DC] text-[#787571]">
+                  v1.0
+                </span>
+              </div>
               <span className="text-[11px] font-medium text-[#787571] mt-0.5">
-                {title !== 'PoolIQ' && title !== 'pool-IQ' ? title : (userRole === 'admin' ? 'Dispatch Console' : 'Ride Pooling')}
+                {title !== 'PoolIQ' && title !== 'pool-IQ' ? title : (userRole === 'admin' ? 'Dispatch Console' : 'Dynamic Ride Pooling')}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Right Controls: Live Beacon, Engine Tune & Profile */}
+        {/* Right Controls: Engine Tune & Profile */}
         <div className="flex items-center gap-2">
-          {/* Live Status Pill */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-[#EAE5DC] shadow-xs">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F5C451] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F5C451]"></span>
-            </span>
-            <span className="text-[11.5px] font-semibold text-[#1D1D22]">
-              {userRole === 'admin' ? 'Live Fleet' : 'Live'}
-            </span>
-          </div>
-
           {/* Operator Engine Controls button (Only in admin mode or if clicked) */}
           {onTuneClick && userRole === 'admin' && (
             <button

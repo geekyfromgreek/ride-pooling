@@ -3,6 +3,69 @@ import LeafletMap from '../components/LeafletMap';
 import { fetchRoadRoute, getAccurateDistance } from '../utils/routing';
 import { NASHIK_HUBS, getSharedRideOrigin } from '../data/nashikLocations';
 
+// Calculate bearing between two coordinates in degrees
+function calculateBearing(startLat, startLng, destLat, destLng) {
+  const startLatRad = (startLat * Math.PI) / 180;
+  const startLngRad = (startLng * Math.PI) / 180;
+  const destLatRad = (destLat * Math.PI) / 180;
+  const destLngRad = (destLng * Math.PI) / 180;
+
+  const y = Math.sin(destLngRad - startLngRad) * Math.cos(destLatRad);
+  const x =
+    Math.cos(startLatRad) * Math.sin(destLatRad) -
+    Math.sin(startLatRad) * Math.cos(destLatRad) * Math.cos(destLngRad - startLngRad);
+  const brng = (Math.atan2(y, x) * 180) / Math.PI;
+  return (brng + 360) % 360;
+}
+
+// Interpolate point along a polyline given a fractional progress 0 <= t <= 1
+function getInterpolatedPoint(polyline, t) {
+  if (!polyline || polyline.length === 0) return null;
+  if (polyline.length === 1 || t <= 0) {
+    return { lat: polyline[0][0], lon: polyline[0][1], bearing: 0 };
+  }
+  if (t >= 1) {
+    const last = polyline[polyline.length - 1];
+    const prev = polyline[polyline.length - 2] || last;
+    return {
+      lat: last[0],
+      lon: last[1],
+      bearing: calculateBearing(prev[0], prev[1], last[0], last[1])
+    };
+  }
+
+  let totalDist = 0;
+  const segDists = [];
+  for (let i = 0; i < polyline.length - 1; i++) {
+    const d = Math.hypot(polyline[i+1][0] - polyline[i][0], polyline[i+1][1] - polyline[i][1]);
+    segDists.push(d);
+    totalDist += d;
+  }
+
+  if (totalDist === 0) {
+    return { lat: polyline[0][0], lon: polyline[0][1], bearing: 0 };
+  }
+
+  const targetDist = Math.max(0, Math.min(1, t)) * totalDist;
+  let accumulated = 0;
+
+  for (let i = 0; i < segDists.length; i++) {
+    const nextAcc = accumulated + segDists[i];
+    if (targetDist <= nextAcc || i === segDists.length - 1) {
+      const segT = segDists[i] > 0 ? (targetDist - accumulated) / segDists[i] : 0;
+      const p1 = polyline[i];
+      const p2 = polyline[i + 1];
+      const lat = p1[0] + (p2[0] - p1[0]) * segT;
+      const lon = p1[1] + (p2[1] - p1[1]) * segT;
+      const bearing = calculateBearing(p1[0], p1[1], p2[0], p2[1]);
+      return { lat, lon, bearing };
+    }
+    accumulated = nextAcc;
+  }
+
+  return { lat: polyline[0][0], lon: polyline[0][1], bearing: 0 };
+}
+
 export default function PoolScreen({
   poolStage,
   setPoolStage,
@@ -338,50 +401,172 @@ export default function PoolScreen({
     return () => clearInterval(timer);
   }, [poolStage, setPoolStage]);
 
-  // Active Ride Vehicle Animation
-  const [vehicleIdx, setVehicleIdx] = useState(0);
-  const [hasArrivedAtPickup, setHasArrivedAtPickup] = useState(false);
+  // Co-Rider Harmony Preferences (from Screenshot 3)
+  const [harmonyPrefs, setHarmonyPrefs] = useState({
+    quietCommute: true,
+    womenVerified: false,
+    bootSpace: true,
+    cabinTemp: 23
+  });
 
+  // Continuous Cab Flow Simulation State
+  // Phases: 'approaching' -> 'arrived_pickup' -> 'in_transit' -> 'completed'
+  const [simPhase, setSimPhase] = useState('approaching');
+  const [simProgress, setSimProgress] = useState(0); // 0 to 1
+  const [simPlaying, setSimPlaying] = useState(true);
+  const [simSpeed, setSimSpeed] = useState(1); // 1, 2, or 3
+  const [boardingCountdown, setBoardingCountdown] = useState(3);
+
+  // Reset simulation when entering active stage
   useEffect(() => {
-    if (poolStage !== 'active') {
-      setVehicleIdx(0);
-      setHasArrivedAtPickup(false);
-      return;
+    if (poolStage === 'active') {
+      setSimPhase('approaching');
+      setSimProgress(0);
+      setSimPlaying(true);
+      setBoardingCountdown(3);
     }
+  }, [poolStage]);
 
-    const totalSteps = approachRouteCoords.length > 0 ? approachRouteCoords.length : 12;
-    const timer = setInterval(() => {
-      setVehicleIdx((prev) => {
-        const next = prev + 1;
-        if (next >= totalSteps - 1) {
-          setHasArrivedAtPickup(true);
-          return totalSteps - 1;
+  // Continuous 60fps animation loop using requestAnimationFrame
+  useEffect(() => {
+    if (poolStage !== 'active' || !simPlaying) return;
+
+    let animId;
+    let lastTime = performance.now();
+
+    const loop = (currentTime) => {
+      const dt = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+
+      setSimProgress((prev) => {
+        if (simPhase === 'approaching') {
+          // Approach progress ~ 8 seconds at 1x
+          const delta = dt * 0.12 * simSpeed;
+          const next = prev + delta;
+          if (next >= 1) {
+            setSimPhase('arrived_pickup');
+            setBoardingCountdown(3);
+            return 1;
+          }
+          return next;
         }
-        return next;
-      });
-    }, 1200);
 
-    return () => clearInterval(timer);
-  }, [poolStage, approachRouteCoords]);
+        if (simPhase === 'in_transit') {
+          // Trip progress ~ 14 seconds at 1x
+          const delta = dt * 0.075 * simSpeed;
+          const next = prev + delta;
+          if (next >= 1) {
+            setSimPhase('completed');
+            return 1;
+          }
+          return next;
+        }
+
+        return prev;
+      });
+
+      animId = requestAnimationFrame(loop);
+    };
+
+    animId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(animId);
+  }, [poolStage, simPlaying, simPhase, simSpeed]);
+
+  // Boarding countdown timer when cab reaches pickup
+  useEffect(() => {
+    if (poolStage !== 'active' || simPhase !== 'arrived_pickup') return;
+
+    const boardingTimer = setInterval(() => {
+      setBoardingCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(boardingTimer);
+          setSimPhase('in_transit');
+          setSimProgress(0);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000 / simSpeed);
+
+    return () => clearInterval(boardingTimer);
+  }, [poolStage, simPhase, simSpeed]);
+
+  // Replay simulation handler
+  const handleReplaySimulation = () => {
+    setSimPhase('approaching');
+    setSimProgress(0);
+    setSimPlaying(true);
+    setBoardingCountdown(3);
+  };
+
+  const hasArrivedAtPickup = simPhase === 'arrived_pickup' || simPhase === 'in_transit' || simPhase === 'completed';
 
   const currentVehicleCoord = useMemo(() => {
-    if (approachRouteCoords.length > 1) {
-      const idx = Math.min(vehicleIdx, approachRouteCoords.length - 1);
-      const pt = approachRouteCoords[idx];
+    if (simPhase === 'approaching') {
+      const poly = approachRouteCoords.length > 1 ? approachRouteCoords : [
+        [sharedOriginHub.lat, sharedOriginHub.lon],
+        [originHub.lat, originHub.lon]
+      ];
+      const pt = getInterpolatedPoint(poly, simProgress);
+      const minsLeft = Math.max(1, Math.ceil((1 - simProgress) * 3));
       return {
-        lat: pt[0],
-        lon: pt[1],
-        isApproaching: !hasArrivedAtPickup,
-        label: hasArrivedAtPickup ? 'Arrived at Pickup' : 'Tata Tigor EV'
+        lat: pt.lat,
+        lon: pt.lon,
+        bearing: pt.bearing,
+        isApproaching: true,
+        isAtPickup: false,
+        isCompleted: false,
+        label: `Tata Tigor EV · Arriving in ~${minsLeft}m`
       };
     }
+
+    if (simPhase === 'arrived_pickup') {
+      const poly = approachRouteCoords.length > 1 ? approachRouteCoords : [];
+      const last = poly.length > 1 ? poly[poly.length - 1] : [originHub.lat, originHub.lon];
+      const prev = poly.length > 1 ? poly[poly.length - 2] : [originHub.lat, originHub.lon];
+      return {
+        lat: originHub.lat,
+        lon: originHub.lon,
+        bearing: calculateBearing(prev[0], prev[1], last[0], last[1]),
+        isApproaching: false,
+        isAtPickup: true,
+        isCompleted: false,
+        label: `Driver Arrived · Boarding (${boardingCountdown}s)`
+      };
+    }
+
+    if (simPhase === 'in_transit') {
+      const poly = activeRouteCoords.length > 1 ? activeRouteCoords : [
+        [originHub.lat, originHub.lon],
+        [destHub.lat, destHub.lon]
+      ];
+      const pt = getInterpolatedPoint(poly, simProgress);
+      const estMin = Math.max(1, Math.ceil((1 - simProgress) * estTimeMin));
+      return {
+        lat: pt.lat,
+        lon: pt.lon,
+        bearing: pt.bearing,
+        isApproaching: false,
+        isAtPickup: false,
+        isCompleted: false,
+        label: `En Route to ${destHub.shortName} · ${estMin}m`
+      };
+    }
+
+    // Completed
+    const poly = activeRouteCoords.length > 1 ? activeRouteCoords : [];
+    const last = poly.length > 1 ? poly[poly.length - 1] : [destHub.lat, destHub.lon];
+    const prev = poly.length > 1 ? poly[poly.length - 2] : [destHub.lat, destHub.lon];
     return {
-      lat: (originHub.lat + sharedOriginHub.lat) / 2,
-      lon: (originHub.lon + sharedOriginHub.lon) / 2,
-      isApproaching: !hasArrivedAtPickup,
-      label: hasArrivedAtPickup ? 'Arrived at Pickup' : 'Tata Tigor EV'
+      lat: destHub.lat,
+      lon: destHub.lon,
+      bearing: calculateBearing(prev[0], prev[1], last[0], last[1]),
+      isApproaching: false,
+      isAtPickup: false,
+      isCompleted: true,
+      label: 'Arrived at Destination'
     };
-  }, [approachRouteCoords, vehicleIdx, hasArrivedAtPickup, originHub, sharedOriginHub]);
+  }, [simPhase, simProgress, approachRouteCoords, activeRouteCoords, sharedOriginHub, originHub, destHub, boardingCountdown, estTimeMin]);
 
   // Cancel flow with confirmation state
   const [cancelIsConfirm, setCancelIsConfirm] = useState(false);
@@ -567,6 +752,110 @@ export default function PoolScreen({
               </div>
             </div>
 
+            {/* Co-Rider Harmony Preferences Card (Matching Screenshot 3) */}
+            <div className="mt-4 pt-3.5 border-t border-[#EAE5DC] flex flex-col gap-2.5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-[15px] font-bold text-[#1D1D22]">Co-Rider Harmony</h4>
+                  <p className="text-[11.5px] text-[#787571]">Matched with compatible passengers</p>
+                </div>
+                <span className="material-symbols-outlined text-[#787571] text-[20px]">tune</span>
+              </div>
+
+              {/* 1. Quiet Commute Lock */}
+              <div className="p-3.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE5DC] flex items-center justify-between">
+                <div className="flex items-center gap-3 pr-2">
+                  <span className="material-symbols-outlined text-[#1D1D22] text-[21px] shrink-0">volume_off</span>
+                  <div>
+                    <div className="text-[13px] font-bold text-[#1D1D22]">Quiet Commute Lock</div>
+                    <div className="text-[11px] text-[#787571]">Matched with silent co-riders (no speaker calls)</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setHarmonyPrefs(p => ({ ...p, quietCommute: !p.quietCommute }))}
+                  className={`w-12 h-7 rounded-full transition-colors p-0.5 flex items-center cursor-pointer shrink-0 ${
+                    harmonyPrefs.quietCommute ? 'bg-[#1D1D22] justify-end' : 'bg-[#E5E0D8] justify-start'
+                  }`}
+                  aria-label="Toggle Quiet Commute Lock"
+                >
+                  <span className="w-6 h-6 bg-white rounded-full shadow-sm"></span>
+                </button>
+              </div>
+
+              {/* 2. Women-Verified Pool */}
+              <div className="p-3.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE5DC] flex items-center justify-between">
+                <div className="flex items-center gap-3 pr-2">
+                  <span className="material-symbols-outlined text-[#1D1D22] text-[21px] shrink-0">verified_user</span>
+                  <div>
+                    <div className="text-[13px] font-bold text-[#1D1D22]">Women-Verified Pool</div>
+                    <div className="text-[11px] text-[#787571]">Exclusive matching with verified women riders</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setHarmonyPrefs(p => ({ ...p, womenVerified: !p.womenVerified }))}
+                  className={`w-12 h-7 rounded-full transition-colors p-0.5 flex items-center cursor-pointer shrink-0 ${
+                    harmonyPrefs.womenVerified ? 'bg-[#1D1D22] justify-end' : 'bg-[#E5E0D8] justify-start'
+                  }`}
+                  aria-label="Toggle Women-Verified Pool"
+                >
+                  <span className="w-6 h-6 bg-white rounded-full shadow-sm"></span>
+                </button>
+              </div>
+
+              {/* 3. Boot Space Reservation */}
+              <div className="p-3.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE5DC] flex items-center justify-between">
+                <div className="flex items-center gap-3 pr-2">
+                  <span className="material-symbols-outlined text-[#1D1D22] text-[21px] shrink-0">luggage</span>
+                  <div>
+                    <div className="text-[13px] font-bold text-[#1D1D22]">Boot Space Reservation</div>
+                    <div className="text-[11px] text-[#787571]">Guarantees 1 large suitcase capacity in vehicle boot</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setHarmonyPrefs(p => ({ ...p, bootSpace: !p.bootSpace }))}
+                  className={`w-12 h-7 rounded-full transition-colors p-0.5 flex items-center cursor-pointer shrink-0 ${
+                    harmonyPrefs.bootSpace ? 'bg-[#1D1D22] justify-end' : 'bg-[#E5E0D8] justify-start'
+                  }`}
+                  aria-label="Toggle Boot Space Reservation"
+                >
+                  <span className="w-6 h-6 bg-white rounded-full shadow-sm"></span>
+                </button>
+              </div>
+
+              {/* 4. Cabin Climate Consensus */}
+              <div className="p-3.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE5DC] flex items-center justify-between">
+                <div className="flex items-center gap-3 pr-2">
+                  <span className="material-symbols-outlined text-[#1D1D22] text-[21px] shrink-0">ac_unit</span>
+                  <div>
+                    <div className="text-[13px] font-bold text-[#1D1D22]">Cabin Climate Consensus</div>
+                    <div className="text-[11px] text-[#787571]">Fleet-standard cabin temperature</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full border border-[#EAE5DC] shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setHarmonyPrefs(p => ({ ...p, cabinTemp: Math.max(18, p.cabinTemp - 1) }))}
+                    className="w-6 h-6 rounded-full bg-[#FAF7F2] hover:bg-[#EAE5DC] text-[#1D1D22] font-bold text-xs flex items-center justify-center cursor-pointer"
+                  >
+                    -
+                  </button>
+                  <span className="text-xs font-bold text-[#1D1D22] min-w-[34px] text-center">
+                    {harmonyPrefs.cabinTemp}°C
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setHarmonyPrefs(p => ({ ...p, cabinTemp: Math.min(28, p.cabinTemp + 1) }))}
+                    className="w-6 h-6 rounded-full bg-[#FAF7F2] hover:bg-[#EAE5DC] text-[#1D1D22] font-bold text-xs flex items-center justify-center cursor-pointer"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* Helper Notice */}
             <p className="text-[12px] text-[#787571] text-center my-3">
               Fair pricing based on active co-passengers. Never detours &gt; 4 mins.
@@ -586,7 +875,8 @@ export default function PoolScreen({
                     dest: destHub,
                     sharedOrigin: freshSharedOrigin,
                     soloFare,
-                    pooledFare: dynamicPoolPrice
+                    pooledFare: dynamicPoolPrice,
+                    harmonyPrefs
                   });
                 }
               }}
@@ -709,6 +999,20 @@ export default function PoolScreen({
               </div>
             </div>
 
+            {/* Harmony Preferences Applied Pill */}
+            <div className="mt-3 bg-[#FAF7F2] rounded-xl px-3.5 py-2.5 border border-[#EAE5DC] flex items-center justify-between text-xs">
+              <span className="text-[#787571] font-medium">Harmony Filter</span>
+              <span className="text-[#1D1D22] font-semibold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#10B981]"></span>
+                <span>
+                  {harmonyPrefs.quietCommute ? 'Quiet Commute · ' : ''}
+                  {harmonyPrefs.cabinTemp}°C AC
+                  {harmonyPrefs.bootSpace ? ' · Boot Reserved' : ''}
+                  {harmonyPrefs.womenVerified ? ' · Women-Verified' : ''}
+                </span>
+              </span>
+            </div>
+
             {/* Cancel Button */}
             <button
               id="cancel-btn"
@@ -746,12 +1050,50 @@ export default function PoolScreen({
               vehicleCoord={currentVehicleCoord}
               height="280px"
             />
-            {/* Quick floating ETA Pill */}
+
+            {/* Quick floating Status Pill */}
             <div className="absolute top-3 left-3 z-[400] pointer-events-none">
               <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full border border-[#EAE5DC] shadow-sm flex items-center gap-1.5 text-xs text-[#1D1D22] font-semibold">
-                <span className="material-symbols-outlined text-[15px] text-[#F5C451]">schedule</span>
-                <span>{hasArrivedAtPickup ? 'Arrived at Pickup' : 'Arriving in ~2 mins'}</span>
+                <span className="material-symbols-outlined text-[15px] text-[#F5C451]">
+                  {simPhase === 'completed' ? 'check_circle' : simPhase === 'arrived_pickup' ? 'person_pin_circle' : 'schedule'}
+                </span>
+                <span>
+                  {simPhase === 'approaching' && 'Approaching Pickup (~2 mins)'}
+                  {simPhase === 'arrived_pickup' && `Driver Arrived · Boarding (${boardingCountdown}s)`}
+                  {simPhase === 'in_transit' && `In Transit to ${destHub.shortName}`}
+                  {simPhase === 'completed' && 'Arrived at Destination'}
+                </span>
               </div>
+            </div>
+
+            {/* Continuous Cab Simulation Controls Overlay */}
+            <div className="absolute top-3 right-3 z-[400] flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full border border-[#EAE5DC] shadow-sm">
+              <button
+                type="button"
+                onClick={() => setSimPlaying(!simPlaying)}
+                className="text-[#1D1D22] hover:text-black flex items-center justify-center cursor-pointer p-0.5"
+                title={simPlaying ? "Pause simulation" : "Play simulation"}
+              >
+                <span className="material-symbols-outlined text-[16px]">
+                  {simPlaying ? 'pause' : 'play_arrow'}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={handleReplaySimulation}
+                className="text-[#787571] hover:text-[#1D1D22] flex items-center justify-center cursor-pointer p-0.5"
+                title="Replay from start"
+              >
+                <span className="material-symbols-outlined text-[15px]">replay</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSimSpeed(s => (s === 1 ? 2 : s === 2 ? 3 : 1))}
+                className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FAF7F2] border border-[#EAE5DC] text-[#1D1D22] hover:bg-[#EAE5DC] cursor-pointer"
+                title="Cycle simulation speed"
+              >
+                {simSpeed}x
+              </button>
             </div>
           </div>
 
@@ -779,7 +1121,10 @@ export default function PoolScreen({
                       MH 15 AB 4821
                     </span>
                     <span className="text-xs text-[#787571]">
-                      {hasArrivedAtPickup ? 'Ready for boarding' : 'Arriving in 2 mins'}
+                      {simPhase === 'approaching' && 'Approaching pickup point'}
+                      {simPhase === 'arrived_pickup' && `Ready for boarding at ${originHub.shortName}`}
+                      {simPhase === 'in_transit' && `In transit to ${destHub.shortName}`}
+                      {simPhase === 'completed' && 'Ride completed'}
                     </span>
                   </div>
                 </div>
@@ -795,6 +1140,32 @@ export default function PoolScreen({
               </div>
             </div>
 
+            {/* Co-Rider Harmony Preferences Active Badges */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+              {harmonyPrefs.quietCommute && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#FAF7F2] border border-[#EAE5DC] text-[11px] font-semibold text-[#1D1D22] shrink-0">
+                  <span className="material-symbols-outlined text-[13px] text-[#10B981]">volume_off</span>
+                  Quiet Commute
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#FAF7F2] border border-[#EAE5DC] text-[11px] font-semibold text-[#1D1D22] shrink-0">
+                <span className="material-symbols-outlined text-[13px] text-[#3B82F6]">ac_unit</span>
+                Cabin {harmonyPrefs.cabinTemp}°C
+              </span>
+              {harmonyPrefs.bootSpace && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#FAF7F2] border border-[#EAE5DC] text-[11px] font-semibold text-[#1D1D22] shrink-0">
+                  <span className="material-symbols-outlined text-[13px] text-[#D97706]">luggage</span>
+                  Boot Reserved
+                </span>
+              )}
+              {harmonyPrefs.womenVerified && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#FAF7F2] border border-[#EAE5DC] text-[11px] font-semibold text-[#1D1D22] shrink-0">
+                  <span className="material-symbols-outlined text-[13px] text-[#10B981]">verified_user</span>
+                  Women-Verified
+                </span>
+              )}
+            </div>
+
             {/* Key Trip Metrics */}
             <div className="grid grid-cols-2 gap-2.5">
               <div className="bg-[#FAF7F2] p-3 rounded-2xl border border-[#EAE5DC] flex items-center gap-3">
@@ -804,7 +1175,7 @@ export default function PoolScreen({
                 <div>
                   <span className="text-[11px] font-medium text-[#787571] uppercase tracking-wider block">Pickup Wait</span>
                   <span className="text-[14px] font-bold text-[#1D1D22]">
-                    {hasArrivedAtPickup ? 'Board Now' : '~2 mins'}
+                    {simPhase === 'approaching' ? '~2 mins' : simPhase === 'arrived_pickup' ? 'Board Now' : simPhase === 'in_transit' ? 'In Transit' : 'Completed'}
                   </span>
                 </div>
               </div>

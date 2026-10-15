@@ -311,26 +311,26 @@ export default function LeafletMap({
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 3.6 SHARED ORIGIN MARKER
+    // 3.6 SHARED ORIGIN MARKER (Offset neatly to side to prevent overlap)
     // ─────────────────────────────────────────────────────────────
     if (sharedOrigin) {
       const sharedName = sharedOrigin.shortName || sharedOrigin.name || 'Co-Rider Stop';
       const sharedIcon = L.divIcon({
         className: 'custom-shared-node',
         html: `
-          <div style="display: flex; flex-direction: column; align-items: center; pointer-events: none;">
-            <div style="background: rgba(255,255,255,0.95); backdrop-filter: blur(4px); padding: 2px 8px; border-radius: 9999px; border: 1px solid #EAE5DC; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700; color: #1D1D22; margin-bottom: 3px; white-space: nowrap;">
-              Co-Rider 1 · ${sharedName}
+          <div style="display: flex; align-items: center; gap: 5px; pointer-events: none;">
+            <div style="width: 18px; height: 18px; border-radius: 50%; background: #F5C451; border: 2px solid #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; shrink-0;">
+              <div style="width: 5px; height: 5px; border-radius: 50%; background: #1D1D22;"></div>
             </div>
-            <div style="width: 20px; height: 20px; border-radius: 50%; background: #F5C451; border: 2px solid #FFFFFF; box-shadow: 0 3px 8px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center;">
-              <div style="width: 6px; height: 6px; border-radius: 50%; background: #1D1D22;"></div>
+            <div style="background: rgba(255,255,255,0.95); backdrop-filter: blur(4px); padding: 2px 7px; border-radius: 9999px; border: 1px solid #EAE5DC; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10px; font-weight: 700; color: #1D1D22; white-space: nowrap;">
+              Co-Rider · ${sharedName}
             </div>
           </div>
         `,
-        iconSize: [160, 24],
-        iconAnchor: [80, 20]
+        iconSize: [150, 20],
+        iconAnchor: [9, 10]
       });
-      addLayer(L.marker([sharedOrigin.lat, sharedOrigin.lon], { icon: sharedIcon }));
+      addLayer(L.marker([sharedOrigin.lat, sharedOrigin.lon], { icon: sharedIcon, zIndexOffset: 400 }));
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -410,7 +410,7 @@ export default function LeafletMap({
         className: 'custom-pickup-node',
         html: `
           <div style="display: flex; flex-direction: column; align-items: center; pointer-events: none;">
-            <div style="background: rgba(255,255,255,0.95); backdrop-filter: blur(4px); padding: 2.5px 8.5px; border-radius: 9999px; border: 1px solid #EAE5DC; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700; color: #1D1D22; margin-bottom: 3px; white-space: nowrap;">
+            <div style="background: rgba(255,255,255,0.96); backdrop-filter: blur(4px); padding: 2.5px 8px; border-radius: 9999px; border: 1px solid #EAE5DC; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700; color: #1D1D22; margin-bottom: 3px; white-space: nowrap;">
               ${pickupName}
             </div>
             <div style="width: 24px; height: 24px; border-radius: 50%; background: #1D1D22; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 10px rgba(0,0,0,0.18); display: flex; align-items: center; justify-content: center;">
@@ -419,9 +419,9 @@ export default function LeafletMap({
           </div>
         `,
         iconSize: [140, 48],
-        iconAnchor: [70, 40]
+        iconAnchor: [70, 42]
       });
-      addLayer(L.marker([pickup.lat, pickup.lon], { icon: pickupIcon }));
+      addLayer(L.marker([pickup.lat, pickup.lon], { icon: pickupIcon, zIndexOffset: 500 }));
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -433,7 +433,7 @@ export default function LeafletMap({
         className: 'custom-drop-node',
         html: `
           <div style="display: flex; flex-direction: column; align-items: center; pointer-events: none;">
-            <div style="background: rgba(255,255,255,0.95); backdrop-filter: blur(4px); padding: 2.5px 8.5px; border-radius: 9999px; border: 1px solid #EAE5DC; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700; color: #1D1D22; margin-bottom: 3px; white-space: nowrap;">
+            <div style="background: rgba(255,255,255,0.96); backdrop-filter: blur(4px); padding: 2.5px 8px; border-radius: 9999px; border: 1px solid #EAE5DC; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700; color: #1D1D22; margin-bottom: 3px; white-space: nowrap;">
               ${dropName}
             </div>
             <div style="width: 24px; height: 24px; border-radius: 50%; background: #F5C451; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 10px rgba(0,0,0,0.18); display: flex; align-items: center; justify-content: center;">
@@ -442,36 +442,81 @@ export default function LeafletMap({
           </div>
         `,
         iconSize: [140, 48],
-        iconAnchor: [70, 40]
+        iconAnchor: [70, 42]
       });
-      addLayer(L.marker([drop.lat, drop.lon], { icon: dropIcon }));
+      addLayer(L.marker([drop.lat, drop.lon], { icon: dropIcon, zIndexOffset: 600 }));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // 7. REAL-TIME VEHICLE MARKER (Clean White Circle with Amber Dot)
-    // ─────────────────────────────────────────────────────────────
-    if (vehicleCoord) {
-      const vehLabel = vehicleCoord.label || (vehicleCoord.isApproaching ? 'Approaching Pickup' : 'On Route');
-      const vehicleIcon = L.divIcon({
-        className: 'custom-vehicle-moving-node',
-        html: `
-          <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
-            <div style="background: rgba(255,255,255,0.95); backdrop-filter: blur(4px); padding: 2px 7px; border-radius: 9999px; border: 1px solid #EAE5DC; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10px; font-weight: 700; color: #1D1D22; margin-bottom: 3px; white-space: nowrap;">
-              ${vehLabel}
-            </div>
-            <div style="position: relative; width: 34px; height: 34px; border-radius: 50%; background: #FFFFFF; border: 1.5px solid #EAE5DC; box-shadow: 0 4px 14px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center;">
-              <span class="material-symbols-outlined" style="font-size: 18px; color: #1D1D22;">directions_car</span>
-              <span style="position: absolute; top: -1px; right: -1px; width: 9px; height: 9px; border-radius: 50%; background: #F5C451; border: 2px solid #FFFFFF;"></span>
-            </div>
+  }, [center, zoom, pickup, drop, sharedOrigin, approachRouteCoords, routeCoords, corridors, selectedCorridorId, fleetVehicles, selectedVehicleId, diffPolyline, diffMode, showRadar, radarCoords, searchRadiusMeters]);
+
+  // ─────────────────────────────────────────────────────────────
+  // 7. REAL-TIME SMOOTH ANIMATED CAB MARKER (Dedicated Ref)
+  // ─────────────────────────────────────────────────────────────
+  const vehicleMarkerRef = useRef(null);
+
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+
+    if (!vehicleCoord || typeof vehicleCoord.lat !== 'number' || typeof vehicleCoord.lon !== 'number') {
+      if (vehicleMarkerRef.current) {
+        vehicleMarkerRef.current.remove();
+        vehicleMarkerRef.current = null;
+      }
+      return;
+    }
+
+    const bearing = typeof vehicleCoord.bearing === 'number' ? vehicleCoord.bearing : 0;
+    const isAtPickup = Boolean(vehicleCoord.isAtPickup);
+    const isCompleted = Boolean(vehicleCoord.isCompleted);
+    const label = vehicleCoord.label || (vehicleCoord.isApproaching ? 'Approaching Pickup' : 'Tata Tigor EV');
+
+    const vehicleIcon = L.divIcon({
+      className: 'custom-vehicle-moving-node',
+      html: `
+        <div style="position: relative; display: flex; flex-direction: column; align-items: center; pointer-events: none;">
+          <!-- Floating Status Pill -->
+          <div style="background: rgba(255,255,255,0.96); backdrop-filter: blur(6px); padding: 3px 9px; border-radius: 9999px; border: 1px solid #EAE5DC; box-shadow: 0 4px 12px rgba(29,29,34,0.12); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10px; font-weight: 700; color: #1D1D22; margin-bottom: 4px; white-space: nowrap; display: flex; align-items: center; gap: 5px;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: ${isAtPickup ? '#10B981' : isCompleted ? '#3B82F6' : '#F5C451'}; ${isAtPickup ? 'box-shadow: 0 0 6px #10B981;' : ''}"></span>
+            <span>${label}</span>
           </div>
-        `,
-        iconSize: [130, 52],
-        iconAnchor: [65, 42]
-      });
-      addLayer(L.marker([vehicleCoord.lat, vehicleCoord.lon], { icon: vehicleIcon }));
-    }
 
-  }, [center, zoom, pickup, drop, sharedOrigin, approachRouteCoords, routeCoords, vehicleCoord, corridors, selectedCorridorId, fleetVehicles, selectedVehicleId, diffPolyline, diffMode, showRadar, radarCoords, searchRadiusMeters]);
+          <!-- Cab Marker Container with Directional Rotation -->
+          <div style="position: relative; width: 38px; height: 38px;">
+            ${isAtPickup ? `
+              <!-- Small cab arrival pulse animation when pickup arrives -->
+              <div style="position: absolute; inset: -7px; border-radius: 50%; border: 2.5px solid #10B981; opacity: 0.85; animation: ping 1.2s cubic-bezier(0,0,0.2,1) infinite;"></div>
+              <div style="position: absolute; inset: -3px; border-radius: 50%; background: rgba(16,185,129,0.15); animation: pulse 1.5s infinite;"></div>
+            ` : ''}
+            <div style="width: 38px; height: 38px; border-radius: 50%; background: #1D1D22; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 16px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; transform: rotate(${bearing}deg); transition: transform 0.12s ease;">
+              <!-- Sleek Top-down Cab Vector -->
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <rect x="6.5" y="3" width="11" height="18" rx="3.5" fill="#1D1D22" stroke="#FFFFFF" stroke-width="1.3"/>
+                <path d="M7.5 7.5H16.5L15.5 10.5H8.5L7.5 7.5Z" fill="#F5C451"/>
+                <path d="M8 17H16L15.5 18.5H8.5L8 17Z" fill="#F5C451" opacity="0.8"/>
+                <circle cx="8" cy="4.2" r="1" fill="#FDE047"/>
+                <circle cx="16" cy="4.2" r="1" fill="#FDE047"/>
+              </svg>
+            </div>
+            <!-- Active Indicator Badge -->
+            <div style="position: absolute; top: -1px; right: -1px; width: 10px; height: 10px; border-radius: 50%; background: ${isAtPickup ? '#10B981' : isCompleted ? '#3B82F6' : '#F5C451'}; border: 2px solid #FFFFFF; box-shadow: 0 1px 4px rgba(0,0,0,0.15);"></div>
+          </div>
+        </div>
+      `,
+      iconSize: [140, 62],
+      iconAnchor: [70, 50]
+    });
+
+    if (!vehicleMarkerRef.current) {
+      vehicleMarkerRef.current = L.marker([vehicleCoord.lat, vehicleCoord.lon], {
+        icon: vehicleIcon,
+        zIndexOffset: 1200
+      }).addTo(map);
+    } else {
+      vehicleMarkerRef.current.setLatLng([vehicleCoord.lat, vehicleCoord.lon]);
+      vehicleMarkerRef.current.setIcon(vehicleIcon);
+    }
+  }, [vehicleCoord]);
 
   return (
     <div className={`relative w-full overflow-hidden ${className}`} style={{ height: height || '100%' }}>
