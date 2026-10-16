@@ -170,20 +170,12 @@ export default function App() {
     }
   };
 
-  const handleRequestRide = async ({ origin, dest, sharedOrigin, soloFare, pooledFare, harmonyPrefs, driver }) => {
-    let res = null;
-    try {
-      res = await submitRideRequest({
-        pickup: origin,
-        drop: dest,
-        seats: 1
-      });
-    } catch (e) {
-      console.warn('Ride request fallback:', e);
-    }
-    const rideId = res && res.id ? res.id : `R_${Math.random().toString(16).substring(2, 8)}`;
+  const handleRequestRide = ({ origin, dest, sharedOrigin, soloFare, pooledFare, harmonyPrefs, driver }) => {
+    const tempRideId = `R_${Math.random().toString(16).substring(2, 8)}`;
+
+    // Immediately set active ride to avoid empty state during navigation
     setActiveRideRequest({
-      id: rideId,
+      id: tempRideId,
       origin,
       dest,
       sharedOrigin,
@@ -192,6 +184,20 @@ export default function App() {
       harmonyPrefs,
       driver
     });
+
+    submitRideRequest({
+      pickup: origin,
+      drop: dest,
+      seats: 1
+    })
+      .then((res) => {
+        if (res && res.id) {
+          setActiveRideRequest((prev) => (prev ? { ...prev, id: res.id } : null));
+        }
+      })
+      .catch((e) => {
+        console.warn('Ride request fallback:', e);
+      });
   };
 
   const handleCancelRide = () => {
